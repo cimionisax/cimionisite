@@ -6,3 +6,28 @@
 :root {
   color-scheme: dark;
 }
+
+/* Client-facing print report: only visible when saving PDF */
+.dna-print { display: none; }
+@media print {
+ @page { size: A4; margin: 17mm; }
+ html, body, #root { background: #fff !important; color: #122629 !important; }
+ body * { visibility: hidden !important; }
+ .dna-print, .dna-print * { visibility: visible !important; }
+ .dna-print { display: block !important; position: absolute; inset: 0 auto auto 0; width: 100%; background: #fff; color: #122629; font: 11pt/1.45 Arial, sans-serif; }
+ .dna-print-header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #EC6E1A; padding:0 0 12px; gap:20px; }
+ .dna-print-header img { width:125px; max-height:70px; object-fit:contain; background:#062125; padding:7px; border-radius:5px; }
+ .dna-print-header p, .dna-print-feature span, .dna-print-grid small { font-size:8pt; letter-spacing:1.3px; color:#B85A1C; margin:0; }
+ .dna-print-header h1 {font-size:23pt; margin:3px 0; color:#062125; }
+ .dna-print-sub { font-size:9pt; color:#536466; margin:12px 0; }
+ .dna-print-feature { background:#f2f5f4; border-left:4px solid #EC6E1A; padding:14px 18px; margin:17px 0; break-inside:avoid; }
+ .dna-print-feature h2 {font-size:18pt; margin:5px 0; color:#062125; }
+ .dna-print-feature p {margin:5px 0;}
+ .dna-print h3 { color:#062125; font-size:12pt; margin:17px 0 8px; border-bottom:1px solid #c9d1ce; padding-bottom:5px; }
+ .dna-print-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+ .dna-print-grid > div {padding:10px; border:1px solid #dce3df; border-radius:6px; break-inside:avoid; }
+ .dna-print-grid strong {display:block; font-size:12pt; color:#062125; margin:5px 0; }
+ .dna-print-grid p {white-space:pre-wrap; overflow-wrap:anywhere; margin:4px 0; }
+ .dna-print li {margin-bottom:3px;}
+ .dna-print footer {border-top:1px solid #dce3df; margin-top:18px; padding-top:10px; color:#627070; font-size:8pt;}
+}
