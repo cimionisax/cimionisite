@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { LockKeyhole, LogOut, Search, RefreshCw, ArrowLeft, CalendarDays, FileText } from 'lucide-react'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './dnaSupabase.js'
+import { groupedAnswers } from './dnaQuestionLabels.js'
 
 const headers = (token) => ({ apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + token })
 const fmt = (date) => date ? new Date(date).toLocaleDateString('pt-BR') : 'Não informada'
@@ -80,8 +81,10 @@ export default function DNAAdmin() {
   add(hero,'small','IDENTIDADE MUSICAL')
   add(hero,'strong',record.diagnosis?.archetype||'Perfil musical')
   add(hero,'p',record.diagnosis?.summary||'')
-  add(root,'h2','Respostas do questionário')
-  Object.entries(record.answers||{}).forEach(([key,value])=>{const row=add(root,'div','','entry');add(row,'b',key.replaceAll('_',' '));add(row,'p',value)})
+  groupedAnswers(record.answers).forEach(group=>{
+    add(root,'h2',group.title)
+    group.entries.forEach(item=>{const row=add(root,'div','','entry');add(row,'b',item.label);add(row,'p',item.value)})
+  })
   add(root,'h2','Direção da curadoria')
   const ul=add(root,'ul','')
   ;(record.diagnosis?.prioritize||[]).forEach(item=>add(ul,'li',item))
@@ -138,8 +141,8 @@ export default function DNAAdmin() {
       {!selected?<div className="flex min-h-64 flex-col items-center justify-center gap-2 text-zinc-400"><FileText size={30}/><p>Selecione um briefing para visualizar.</p></div>:<div className="space-y-5">
        <div><p className="text-xs uppercase tracking-widest text-orange-400">Briefing do cliente</p><h2 className="mt-2 text-2xl font-bold">{selected.client_name}</h2><p className="mt-2 flex items-center gap-2 text-sm text-zinc-300"><CalendarDays size={16}/>{selected.event_type} · {formatEventDate(selected)}</p></div>
        <div className="rounded-xl bg-orange-500/10 p-4"><p className="text-xs text-orange-300">IDENTIDADE PREDOMINANTE</p><h3 className="mt-2 text-xl font-semibold">{selected.diagnosis?.archetype}</h3><p className="mt-2 text-sm">{selected.diagnosis?.summary}</p></div>
-       <div><h3 className="mb-2 font-semibold">Referências e respostas</h3><dl className="space-y-3">{Object.entries(selected.answers||{}).map(([key,value])=><div key={key} className="border-b border-white/10 pb-2"><dt className="text-xs text-orange-300">{key.replaceAll('_',' ')}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm">{String(value??'')}</dd></div>)}</dl></div>
-       <div><h3 className="mb-2 font-semibold">Prioridades da curadoria</h3><ul className="list-disc space-y-1 pl-5 text-sm">{(selected.diagnosis?.prioritize||[]).map((x,i)=><li key={i}>{x}</li>)}</ul></div>
+       <div className="space-y-4"><h3 className="font-semibold">Respostas por tema</h3>{groupedAnswers(selected.answers).map(group=><section key={group.title} className="rounded-xl border border-white/10 bg-black/10 p-4"><h4 className="mb-4 border-b border-white/10 pb-2 font-semibold text-orange-300">{group.title}</h4><dl className="space-y-4">{group.entries.map(item=><div key={item.key}><dt className="text-sm font-medium text-zinc-300">{item.label}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-white">{item.value}</dd></div>)}</dl></section>)}</div>
+       <div className="rounded-xl border border-white/10 p-4"><h3 className="mb-2 font-semibold">Prioridades da curadoria</h3><ul className="list-disc space-y-1 pl-5 text-sm">{(selected.diagnosis?.prioritize||[]).map((x,i)=><li key={i}>{x}</li>)}</ul></div><div className="rounded-xl border border-white/10 p-4"><h3 className="mb-2 font-semibold">Pontos de atenção</h3><ul className="list-disc space-y-1 pl-5 text-sm">{(selected.diagnosis?.cautions||[]).map((x,i)=><li key={i}>{x}</li>)}</ul></div>
        <div className="flex flex-wrap gap-3"><button onClick={()=>saveAdminPDF(selected)} className="rounded-lg bg-[#EC6E1A] px-4 py-2 text-sm font-semibold">Salvar briefing em PDF</button><button onClick={()=>downloadJSON(selected)} className="rounded-lg border border-white/25 px-4 py-2 text-sm">Exportar dados (JSON)</button></div>
       </div>}
      </section>
