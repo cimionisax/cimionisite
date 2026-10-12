@@ -134,65 +134,58 @@ export default function App() {
         </div>
       </section>
 
-      {/* Serviços */}
-      <section id='servicos' className='max-w-6xl mx-auto px-4 py-16'>
-        <div className='flex items-center gap-2 mb-6'>
-          <Sparkles className='w-5 h-5' style={{ color: BRAND.accent }} />
-          <h2 className='text-2xl md:text-3xl font-bold'>Pacotes</h2>
+      {/* Experiências: DJ e Sax */}
+      <section id="servicos" className="max-w-6xl mx-auto px-4 py-16">
+        <div className="mb-9">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5" style={{color:BRAND.accent}} />
+            <span className="text-xs uppercase tracking-[.2em] text-zinc-300">Experiências musicais</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold">A trilha certa para cada momento.</h2>
+          <p className="mt-3 max-w-3xl text-zinc-300">Da atmosfera elegante ao auge da pista: contrate DJ, sax ao vivo ou combine as duas experiências em uma proposta personalizada.</p>
         </div>
-        <div className='grid md:grid-cols-3 gap-6'>
-          {[
-            {
-              title: 'Walking Sax & Live Sax',
-              bullets: [
-                'Receptivo elegante (até 1h)',
-                'Entrada impactante na pista (até 1h)',
-                'Repertório Deep/Chill/House/Open',
-                'Look especial para a pista',
-              ],
-              cta: 'Quero esse',
-            },
-            {
-              title: 'Full Event (Premium)',
-              highlight: true,
-              bullets: [
-                'Presença do início ao fim',
-                'Participação na cerimônia, no Receptivo, no Coquetel e na pista!',
-                'Única venda com acréscimo de cerimônia',
-                'Receptivo + Pista personalizáveis',
-              ],
-              cta: 'Reservar data',
-            },
-            {
-              title: 'Corporate & Specials',
-              bullets: [
-                'Eventos corporativos e lançamentos',
-                'Ambiente lounge sofisticado',
-                'Versão pista com alto impacto',
-                'Rider técnico sob demanda',
-              ],
-              cta: 'Conversar',
-            },
-          ].map((p, i) => (
-            <motion.div key={p.title} variants={fadeUp} initial='hidden' whileInView='show' viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-              <div className={`rounded-2xl border border-white/10 p-6 ${p.highlight ? 'bg-white/5' : 'bg-zinc-950'}`}>
-                <div className='text-lg md:text-xl font-semibold flex items-center justify-between'>
-                  {p.title}
-                  {p.highlight && (
-                    <span className='text-xs px-2 py-1 rounded-full' style={{ background: 'rgba(236,110,26,0.12)', color: '#F4C3A1', border: '1px solid rgba(236,110,26,0.35)' }}>Mais pedido</span>
-                  )}
-                </div>
-                <ul className='mt-4 space-y-2 text-zinc-300'>
-                  {p.bullets.map((b) => (
-                    <li key={b} className='flex items-start gap-2'><CheckCircle2 className='w-4 h-4' style={{ color: BRAND.accent }} /> <span>{b}</span></li>
-                  ))}
-                </ul>
-                <a href={waLink} target='_blank' rel='noreferrer' className='mt-4 inline-flex items-center justify-center w-full gap-2 rounded-xl px-4 py-2' style={{ backgroundColor: BRAND.accent }}>
-                  {p.cta} <ArrowRight className='w-4 h-4' />
-                </a>
-              </div>
-            </motion.div>
-          ))}
+        {[
+          {heading:'DJ',eyebrow:'Curadoria e pista',description:'Uma experiência conduzida com identidade musical, leitura de público e repertório pensado para o seu evento.',items:[
+            {title:'DJ Residente do Evento',tag:'Do início ao fim',description:'A condução musical do evento, com curadoria para seus diferentes momentos.',bullets:['Planejamento do repertório e briefing musical','Ambientação, transições e condução da pista','Adaptação da energia à programação e ao público'],cta:'Consultar DJ residente'},
+            {title:'DJ Atração',tag:'Performance especial',description:'Um set de destaque, pensado como atração para um momento marcante da festa.',bullets:['Apresentação em horário definido','Identidade e proposta musical do set','Integração com a produção e a programação'],cta:'Consultar DJ atração'}
+          ]},
+          {heading:'Sax Live',eyebrow:'Música ao vivo',description:'O saxofone como protagonista de uma experiência elegante ou de um momento de alta energia.',items:[
+            {title:'Sax Receptivo',tag:'Atmosfera',description:'Performance ao vivo para receber os convidados e valorizar a ambientação.',bullets:['Repertório adequado ao conceito do evento','Performance para receptivo ou coquetel','Formato alinhado à duração e ao espaço'],cta:'Consultar sax receptivo'},
+            {title:'Sax Pista',tag:'Impacto',description:'Uma entrada de sax ao vivo para transformar a energia da pista.',bullets:['Performance de destaque na pista','Interação com a música e o público','Momento combinado com o DJ e a produção'],cta:'Consultar sax pista'}
+          ]}
+        ].map(group=>(
+          <div key={group.heading} className="mb-12">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-white/15 pb-4">
+              <div><p className="text-xs uppercase tracking-widest" style={{color:BRAND.accent}}>{group.eyebrow}</p><h3 className="mt-1 text-2xl md:text-3xl font-bold">{group.heading}</h3></div>
+              <p className="max-w-lg text-sm text-zinc-300">{group.description}</p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              {group.items.map((p,i)=>(
+                <motion.article key={p.title} variants={fadeUp} initial="hidden" whileInView="show" viewport={{once:true}} transition={{delay:i*.08}}
+                  className="flex flex-col rounded-2xl border border-white/15 bg-zinc-950/90 p-6">
+                  <span className="self-start rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs text-orange-200">{p.tag}</span>
+                  <h4 className="mt-4 text-xl font-semibold">{p.title}</h4>
+                  <p className="mt-2 text-sm text-zinc-300">{p.description}</p>
+                  <ul className="mt-5 flex-1 space-y-3 text-sm text-zinc-300">
+                    {p.bullets.map(b=><li key={b} className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" style={{color:BRAND.accent}}/><span>{b}</span></li>)}
+                  </ul>
+                  <a href={`https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent('Olá! Gostaria de receber informações e disponibilidade para '+p.title+'.')}`}
+                    target="_blank" rel="noreferrer"
+                    className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white"
+                    style={{backgroundColor:BRAND.accent}}>
+                    {p.cta}<ArrowRight className="h-4 w-4"/>
+                  </a>
+                </motion.article>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div className="rounded-2xl border border-orange-500/30 bg-white/5 p-6 md:flex md:items-center md:justify-between md:gap-6">
+          <div><h3 className="text-xl font-bold">DJ + Sax Live</h3><p className="mt-2 text-sm text-zinc-300">O melhor dos dois universos em uma experiência integrada, desenhada para o seu evento.</p></div>
+          <a href={`https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent('Olá! Gostaria de uma proposta personalizada de DJ + Sax Live.')}`}
+            target="_blank" rel="noreferrer"
+            className="mt-5 inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold text-white md:mt-0"
+            style={{backgroundColor:BRAND.accent}}>Solicitar proposta<ArrowRight className="h-4 w-4"/></a>
         </div>
       </section>
 
