@@ -1,0 +1,53 @@
+// Deploy as Supabase Edge Function named "submit-dna" with JWT verification disabled.
+// Requires default SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY secrets provided by Supabase.
+// Before production: enable CAPTCHA / abuse protection and review privacy notice.
+import { createClient } from 'npm:@supabase/supabase-js@2'
+
+const allowedOrigins = new Set([
+  'https://cimionimateus.com.br',
+  'https://www.cimionimateus.com.br',
+])
+const corsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin && allowedOrigins.has(origin) ? origin : 'https://cimionimateus.com.br',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'content-type, apikey, authorization, x-client-info',
+  'Vary': 'Origin',
+  'Content-Type': 'application/json; charset=utf-8',
+})
+const reply = (status: number, data: Record<string, unknown>, origin: string | null) =>
+  new Response(JSON.stringify(data), { status, headers: corsHeaders(origin) })
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === 'object' && !Array.isArray(v)
+
+Deno.serve(async req => {
+  const origin = req.headers.get('origin')
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) })
+  if (req.method !== 'POST') return reply(405, { error: 'Método não permitido.' }, origin)
+  if (origin && !allowedOrigins.has(origin)) return reply(403, { error: 'Origem não permitida.' }, origin)
+  const size = Number(req.headers.get('content-length') || 0)
+  if (size > 64000) return reply(413, { error: 'Formulário muito grande.' }, origin)
+  let data: unknown
+  try { data = await req.json() } catch { return reply(400, { error: 'Formato inválido.' }, origin) }
+  if (!isRecord(data)) return reply(400, { error: 'Dados inválidos.' }, origin)
+  if (JSON.stringify(data).length > 64000) return reply(413, { error: 'Formulário muito grande.' }, origin)
+  const { eventType, answers, profile, diagnosis } = data
+  if (!['Casamento', 'Aniversário', 'Formatura', 'Corporativo'].includes(String(eventType)) ||
+      !isRecord(answers) || !isRecord(profile) || !isRecord(diagnosis)) {
+    return reply(400, { error: 'Formulário incompleto.' }, origin)
+  }
+  const name = String(answers.cliente || '').trim().slice(0, 200)
+  const dateString = String(answers.data || '').trim()
+  // Client date is optional for now; store it in answers, not event_date, if not ISO.
+  const eventDate = /^\d{4}-\d{2}-\d{2}$/.test(dateString) ? dateString : null
+  if (!name) return reply(400, { error: 'Informe seu nome antes de enviar.' }, origin)
+  const url = Deno.env.get('SUPABASE_URL')
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!url || !serviceKey) return reply(503, { error: 'Serviço ainda não configurado.' }, origin)
+  const db = createClient(url, serviceKey, { auth: { persistSession: false } })
+  const { error } = await db.from('dna_submissions').insert({
+    client_name: name, event_date: eventDate, event_type: eventType,
+    answers, profile, diagnosis, status: 'received'
+  })
+  if (error) { console.error('Submission failed:', error.code); return reply(500, { error: 'Não foi possível registrar o formulário.' }, origin) }
+  return reply(201, { ok: true }, origin)
+})
