@@ -186,13 +186,35 @@ export default function DNAMusical() {
  const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('')}
  const result={version:'3.2',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,remixPreference:answers.versoes_remixes,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
- const exportClientPDF=()=>{
+ const exportClientPDF=async()=>{
   const report=document.querySelector('.dna-print')
   if(!report) return
   const popup=window.open('','_blank','width=900,height=1100')
   if(!popup){alert('Permita pop-ups para salvar o PDF.');return}
-  const stylesheet=Array.from(document.styleSheets).find(s=>s.href&&s.href.includes('index')) // optional
-  const content=report.innerHTML.replaceAll('src="/images/','src="'+window.location.origin+'/images/')
+  popup.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Preparando DNA Musical</title></head><body style="font-family:Arial;padding:30px">Preparando seu relatório...</body></html>')
+  popup.document.close()
+  let logoData
+  try {
+    const logoUrl=new URL('/images/logo-light.png',window.location.origin)
+    const response=await fetch(logoUrl.toString(),{cache:'force-cache'})
+    if(!response.ok) throw new Error('A logo não pôde ser carregada ('+response.status+').')
+    const blob=await response.blob()
+    if(!blob.type.startsWith('image/')) throw new Error('O arquivo da logo não é uma imagem.')
+    logoData=await new Promise((resolve,reject)=>{
+      const reader=new FileReader()
+      reader.onload=()=>resolve(reader.result)
+      reader.onerror=()=>reject(new Error('Não foi possível incorporar a logo.'))
+      reader.readAsDataURL(blob)
+    })
+  } catch(error) {
+    popup.document.body.innerHTML='<h2>Não foi possível carregar a logo</h2><p>Volte ao questionário e tente novamente. Se persistir, informe o erro exibido no console.</p>'
+    console.error('Erro na logo do PDF:',error)
+    return
+  }
+  const reportCopy=report.cloneNode(true)
+  const logo=reportCopy.querySelector('.report-head img')
+  if(logo) logo.src=logoData
+  const content=reportCopy.innerHTML
   const styles=`
   @page{size:A4;margin:12mm}
   *{box-sizing:border-box;print-color-adjust:exact;-webkit-print-color-adjust:exact}
@@ -219,9 +241,9 @@ export default function DNAMusical() {
   popup.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><title>DNA Musical · Cimioni Mateus</title><style>'+styles+'</style></head><body><section class="dna-print">'+content+'</section></body></html>')
   popup.document.close()
   const imgs=Array.from(popup.document.images)
-  Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve}))).then(()=>{
-    popup.focus();popup.print()
-  })
+  await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve})))
+  popup.focus()
+  popup.print()
  }
  const sendEmail=()=>{const body=encodeURIComponent('DNA Musical — '+category?.[1]+'\n\n'+JSON.stringify(result,null,2));window.location.href='mailto:cimioi_saxmusic@outlook.com?subject=Meu%20DNA%20Musical&body='+body}
  return <main className="relative min-h-screen bg-[#04181B] text-[#EDEEE6]">
