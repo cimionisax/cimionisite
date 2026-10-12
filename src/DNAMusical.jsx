@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, RotateCcw, Download, Mail } from 'lucide-react'
+import { ArrowLeft, ArrowRight, RotateCcw, Download, Mail, Printer } from 'lucide-react'
 
 const ACCENT = '#EC6E1A'
 const types = [
@@ -230,7 +230,24 @@ export default function DNAMusical() {
     <details className="mt-6 rounded-xl border border-white/15 p-5"><summary className="cursor-pointer font-semibold">Ver indicadores complementares</summary><div className="mt-5 space-y-5">{categories.map(k=><div key={k}><div className="mb-2 flex justify-between text-sm"><span>{labels[k][0]}</span><span>{labels[k][1]}</span></div><div className="h-2 rounded-full bg-white/15"><div className="h-2 rounded-full" style={{width:profile[k]+'%',background:ACCENT}}/></div></div>)}</div><p className="mt-4 text-xs text-zinc-400">As escalas são orientativas, não probabilidades ou medidas científicas.</p></details>
     <h2 className="mt-9 text-xl font-semibold">Detalhes para sua curadoria</h2><p className="mt-2 text-sm text-zinc-400">Estes campos são opcionais. As informações não são salvas no site: exporte o arquivo ou envie por e-mail para compartilhar.</p>
     <div className="mt-5 space-y-4">{freeText('cliente','Nome do cliente ou responsáveis',answers,setAnswers,'Seu nome')}{freeText('data','Data do evento',answers,setAnswers,'Ex.: 18/03/2028')}</div>
-    <div className="mt-8 grid gap-3 sm:grid-cols-2"><button className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold" style={{background:ACCENT}} onClick={exportJSON}><Download size={17}/> Baixar briefing</button><button className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={sendEmail}><Mail size={17}/> Enviar por e-mail</button></div>
+    <section className="dna-print" aria-label="Relatório musical para PDF">
+      <header className="dna-print-header">
+        <img src="/images/logo-light.png" alt="Cimioni Mateus" />
+        <div><p>CURADORIA MUSICAL PERSONALIZADA</p><h1>DNA MUSICAL</h1></div>
+      </header>
+      <p className="dna-print-sub">Perfil preliminar • {category?.[1]} • {answers.cliente||'Cliente'} {answers.data?'• '+answers.data:''}</p>
+      <div className="dna-print-feature"><span>IDENTIDADE PREDOMINANTE</span><h2>{diagnosis.archetype}</h2><p>{diagnosis.summary}</p></div>
+      <h3>Leitura da festa</h3>
+      <div className="dna-print-grid">{diagnosis.signals.map(s=><div key={s.title}><small>{s.title}</small><strong>{s.value}</strong><p>{s.detail}</p></div>)}</div>
+      <h3>Referências musicais</h3>
+      <div className="dna-print-grid"><div><small>Identidade pessoal</small><p>{answers.artistas_pessoais}</p><p>{answers.faixas_pessoais}</p></div><div><small>Repertório da festa</small><p>{answers.genero_base}</p><p>{answers.artistas_festa}</p><p>{answers.faixas_festa}</p></div></div>
+      <h3>Direção artística</h3>
+      <p><strong>Versões e remixes:</strong> {answers.versoes_remixes}</p>
+      <p><strong>Não tocar:</strong> {answers.restricoes_festa}</p>
+      <h3>Prioridades da curadoria</h3><ul>{diagnosis.prioritize.map(v=><li key={v}>{v}</li>)}</ul>
+      <footer>Uma interpretação inicial das suas preferências, sujeita à validação conjunta no briefing. • Cimioni Mateus · DJ & Sax Live</footer>
+    </section>
+    <div className="mt-8 grid gap-3 sm:grid-cols-3"><button type="button" className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={()=>window.print()}><Printer size={17}/> Salvar PDF</button><button className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold" style={{background:ACCENT}} onClick={exportJSON}><Download size={17}/> Baixar briefing</button><button className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={sendEmail}><Mail size={17}/> Enviar por e-mail</button></div>
     <button className="mt-6 flex items-center gap-2 text-sm text-zinc-400 hover:text-white" onClick={reset}><RotateCcw size={16}/> Começar novamente</button>
    </motion.section>}
    </AnimatePresence>
