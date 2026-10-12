@@ -43,16 +43,14 @@ export default function App() {
   return (
     <div className="relative min-h-screen text-[color:var(--light)]"
       style={{ ['--light']: BRAND.light }}>
-      {/* Camada de fundo fixa para o site todo */}
-      <div className="fixed inset-0 -z-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: "url('/images/bg-cimioni.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 10%', // ajuste fino do enquadramento
-            backgroundAttachment: 'fixed'
-          }}
+      {/* Fundo ancorado à viewport: evita zoom/estiramento em navegadores mobile.
+          100svh preserva uma altura estável mesmo quando a barra do navegador muda. */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[100svh] md:inset-0 md:h-auto">
+        <img
+          src="/images/bg-cimioni.jpg"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
         {/* overlay para legibilidade */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
