@@ -32,6 +32,12 @@ const repertoireQuestions=[
  openQ('faixas_pessoais','Quais músicas representam você, mesmo que não sejam para a festa?','Dê dois ou três exemplos e, se quiser, diga por que são importantes.'),
  q('genero_base','Qual universo musical você mais gostaria de explorar na festa?',genreChoices.map(([label,val])=>[val, val==='MPB / Brasilidades'||val==='Pagode / Samba'?{brasil:2}:val==='Eletrônica / House'||val==='Pop / Dance'?{brasil:-2}:{}])),
  ...Object.entries(genreDetails).map(([genre,options])=>({...q('detalhe_'+genre.replace(/[^a-z]/gi,'_').toLowerCase(),'Dentro desse universo, qual direção combina mais com sua festa?',options.map(label=>[label,{}])),when:a=>a.genero_base===genre})),
+ q('versoes_remixes','Para esse estilo musical, como você prefere que o DJ trabalhe as versões das músicas?',[
+  ['Prefiro as versões originais, principalmente das músicas que conheço',{nostalgia:1}],
+  ['Pode usar bons remixes e releituras, sem precisar tocar sempre a versão original',{mistura:1}],
+  ['Gosto de misturar originais e remixes, conforme o momento',{mistura:1}],
+  ['Dou liberdade ao DJ para escolher as versões que funcionarem melhor',{popular:1}]
+ ]),
  openQ('artistas_festa','Quais artistas você gostaria de ouvir na festa?','Podem ser diferentes dos seus favoritos pessoais.'),
  openQ('faixas_festa','Quais músicas são indispensáveis na festa?','Cite músicas e artistas; se não houver obrigatórias, escreva "Nenhuma".'),
  openQ('restricoes_festa','O que você NÃO quer ouvir na festa?','Artistas, músicas ou estilos. Se não houver restrições, escreva "Nenhuma".'),
@@ -178,7 +184,7 @@ export default function DNAMusical() {
  const category=types.find(t=>t[0]===type)
  const complete=()=>{if(chosen.required!==false && !String(answers[chosen.id]||'').trim()){setError(chosen.kind==='text'?'Preencha esse campo para continuar.':'Escolha uma alternativa para continuar.');return}setError('');if(step===questions.length-1)setFinished(true);else setStep(s=>s+1)}
  const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('')}
- const result={version:'3.1',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
+ const result={version:'3.2',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,remixPreference:answers.versoes_remixes,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
  const sendEmail=()=>{const body=encodeURIComponent('DNA Musical — '+category?.[1]+'\n\n'+JSON.stringify(result,null,2));window.location.href='mailto:cimioi_saxmusic@outlook.com?subject=Meu%20DNA%20Musical&body='+body}
  return <main className="relative min-h-screen bg-[#04181B] text-[#EDEEE6]">
@@ -213,6 +219,7 @@ export default function DNAMusical() {
       <div className="rounded-xl border border-[#EC6E1A]/40 bg-[#EC6E1A]/10 p-5"><p className="text-xs uppercase tracking-wide text-orange-300">Seu repertório de festa</p><p className="mt-2 font-semibold">{answers.genero_base}</p><p className="mt-2 whitespace-pre-wrap text-sm">{answers.artistas_festa}</p><p className="mt-3 whitespace-pre-wrap text-sm text-zinc-300">{answers.faixas_festa}</p></div>
     </div>
     <div className="mt-4 rounded-xl border border-white/15 bg-white/5 p-5"><p className="font-semibold">Não tocar</p><p className="mt-2 whitespace-pre-wrap text-sm text-zinc-300">{answers.restricoes_festa}</p></div>
+    <div className="mt-4 rounded-xl border border-white/15 bg-white/5 p-5"><p className="text-xs uppercase tracking-wider text-zinc-400">Originais, remixes e releituras</p><p className="mt-2 text-sm text-zinc-200">{answers.versoes_remixes}</p></div>
     <h2 className="mt-10 text-xl font-semibold">Leitura da pista</h2>
     <div className="mt-4 grid gap-3 sm:grid-cols-2">{diagnosis.signals.map(s=><div key={s.title} className="rounded-xl border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wider text-zinc-400">{s.title}</p><h3 className="mt-2 text-xl font-semibold text-[#EC6E1A]">{s.value}</h3><p className="mt-1 text-sm text-zinc-300">{s.detail}</p></div>)}</div>
     <div className="mt-7 grid gap-4 sm:grid-cols-2">
