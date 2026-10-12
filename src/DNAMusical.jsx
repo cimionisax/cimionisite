@@ -193,27 +193,27 @@ export default function DNAMusical() {
   if(!popup){alert('Permita pop-ups para salvar o PDF.');return}
   popup.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Preparando DNA Musical</title></head><body style="font-family:Arial;padding:30px">Preparando seu relatório...</body></html>')
   popup.document.close()
-  let logoData
-  try {
-    const logoUrl=new URL('/images/logo-light.png',window.location.origin)
-    const response=await fetch(logoUrl.toString(),{cache:'force-cache'})
-    if(!response.ok) throw new Error('A logo não pôde ser carregada ('+response.status+').')
+  const imageToData=async(src)=>{
+    const response=await fetch(new URL(src,window.location.origin).toString(),{cache:'force-cache'})
+    if(!response.ok) throw new Error('Imagem indisponível: '+src+' ('+response.status+')')
     const blob=await response.blob()
-    if(!blob.type.startsWith('image/')) throw new Error('O arquivo da logo não é uma imagem.')
-    logoData=await new Promise((resolve,reject)=>{
+    if(!blob.type.startsWith('image/')) throw new Error('Arquivo inválido: '+src)
+    return new Promise((resolve,reject)=>{
       const reader=new FileReader()
       reader.onload=()=>resolve(reader.result)
-      reader.onerror=()=>reject(new Error('Não foi possível incorporar a logo.'))
+      reader.onerror=()=>reject(new Error('Falha ao incorporar imagem: '+src))
       reader.readAsDataURL(blob)
     })
-  } catch(error) {
-    popup.document.body.innerHTML='<h2>Não foi possível carregar a logo</h2><p>Volte ao questionário e tente novamente. Se persistir, informe o erro exibido no console.</p>'
-    console.error('Erro na logo do PDF:',error)
-    return
   }
   const reportCopy=report.cloneNode(true)
-  const logo=reportCopy.querySelector('.report-head img')
-  if(logo) logo.src=logoData
+  try {
+    const images=Array.from(reportCopy.querySelectorAll('img'))
+    await Promise.all(images.map(async img=>{img.src=await imageToData(img.getAttribute('src'))}))
+  } catch(error) {
+    popup.document.body.innerHTML='<h2>Não foi possível preparar as imagens</h2><p>Atualize o questionário e tente novamente.</p>'
+    console.error('Erro no PDF:',error)
+    return
+  }
   const content=reportCopy.innerHTML
   const styles=`
   @page{size:A4;margin:12mm}
@@ -227,6 +227,10 @@ export default function DNAMusical() {
   .report-meta{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;color:#D2DAD8;font-size:10px}
   .report-meta span:not(:last-child):after{content:'·';padding-left:10px;color:#EC6E1A}
   .report-hero{background:#19383E;padding:17px 18px;border-left:3px solid #EC6E1A;border-radius:5px;break-inside:avoid}
+  .report-hero-shell{display:grid;grid-template-columns:1.45fr .75fr;gap:10px;align-items:stretch;break-inside:avoid}
+  .report-hero-shell .report-hero{margin:0;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .report-photo{height:165px;border-radius:7px;overflow:hidden;background:#091A1E;border:1px solid #35565B;break-inside:avoid}
+  .report-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 25%;filter:saturate(.85) contrast(1.05)}
   .report-hero h2{font-size:22px;color:#FFF;margin:4px 0 7px}.report-hero p{margin:0;font-size:11px;line-height:1.5}
   h3{font-size:13px;font-weight:700;color:#FFF;margin:17px 0 8px;border-bottom:1px solid #4A6264;padding-bottom:5px}
   .report-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.report-facts>div,.report-columns>div{background:#173137;border:1px solid #3B5457;border-radius:5px;padding:10px;break-inside:avoid}
@@ -295,7 +299,7 @@ export default function DNAMusical() {
         <div><span>EXPERIÊNCIA DE CURADORIA MUSICAL</span><h1>DNA MUSICAL</h1><p>Uma trilha sonora com a sua identidade</p></div>
       </header>
       <div className="report-meta"><span>{category?.[1]}</span><span>{answers.cliente||'Perfil musical'}</span>{answers.data&&<span>{answers.data}</span>}</div>
-      <div className="report-hero"><small>SEU PERFIL MUSICAL</small><h2>{diagnosis.archetype}</h2><p>{diagnosis.summary}</p></div>
+      <div className="report-hero-shell"><div className="report-hero"><small>SEU PERFIL MUSICAL</small><h2>{diagnosis.archetype}</h2><p>{diagnosis.summary}</p></div><div className="report-photo"><img src="/images/C-3.jpg" alt="Cimioni Mateus com saxofone" /></div></div>
       <h3>O que faz sua festa acontecer</h3>
       <div className="report-facts">{diagnosis.signals.map(s=><div key={s.title}><small>{s.title}</small><strong>{s.value}</strong></div>)}</div>
       <h3>Sua identidade em música</h3>
