@@ -12,6 +12,21 @@ const types = [
 const categories = ['nostalgia','energia','popular','brasil','mistura']
 const q = (id,title,options,types=null) => ({id,title,options:options.map(([label,weights])=>({label,weights})),types})
 const common = [
+ q('uso_musical','Quando você ouve música no dia a dia e pensa na festa, qual afirmação descreve melhor você?',[
+  ['Quero ouvir na festa quase tudo que gosto em casa',{popular:-2}],
+  ['Meu gosto pessoal é diferente do que quero na pista',{popular:2}],
+  ['Quero equilibrar minhas favoritas com a reação dos convidados',{popular:1}]
+ ]),
+ q('foco_pista','O que você prefere no momento mais animado?',[
+  ['Todo mundo cantando um refrão conhecido',{nostalgia:1,popular:2}],
+  ['Todo mundo dançando, mesmo sem cantar',{energia:2,popular:-1}],
+  ['Um pouco de cada coisa',{mistura:1}]
+ ]),
+ q('surpresa','Qual é a sua abertura para músicas menos conhecidas?',[
+  ['Adoro descobrir faixas diferentes',{popular:-3,nostalgia:-1}],
+  ['Gosto se estiverem bem misturadas com clássicos',{popular:0,mistura:1}],
+  ['Prefiro principalmente músicas conhecidas',{popular:3}]
+ ]),
  q('ambiente','Em qual desses lugares você mais gostaria de estar?',[
   ['Em um festival com todo mundo dançando',{energia:2,popular:1}],
   ['Em um beach club ao pôr do sol',{energia:0,brasil:-1,mistura:-1}],
@@ -99,6 +114,53 @@ const labels = {
  brasil:['Internacional','Brasileira'],
  mistura:['Atmosferas consistentes','Mistura de estilos']
 }
+function interpret(answers,profile,type) {
+ const preferred=answers.preferencia||''
+ const sing=answers.foco_pista?.startsWith('Todo mundo cantando') || answers.pista==='Todos cantando juntos'
+ const dance=answers.foco_pista?.startsWith('Todo mundo dançando')
+ const known=answers.surpresa?.startsWith('Prefiro')
+ const niche=answers.surpresa?.startsWith('Adoro')
+ const personal=answers.uso_musical?.startsWith('Quero ouvir na festa')
+ const distinct=answers.uso_musical?.startsWith('Meu gosto pessoal')
+ const collective=profile.popular>=65
+ const brazil=preferred.startsWith('Hits brasileiros')
+ const house=preferred.startsWith('House')
+ const eclectic=profile.mistura>=65
+ const intense=profile.energia>=65
+ const nostalgia=profile.nostalgia>=65
+ const archetype = brazil && sing ? 'Brasilidades & Coro Coletivo'
+  : house && niche ? 'Curadoria Eletrônica Autoral'
+  : collective && intense ? 'Pista Popular de Alta Energia'
+  : sing && nostalgia ? 'Clássicos para Cantar Junto'
+  : eclectic ? 'Open Format Versátil'
+  : !collective && !intense ? 'Atmosfera Sofisticada'
+  : intense ? 'Pista Dançante' : 'Equilíbrio Musical'
+ const summary = [
+  sing?'O canto coletivo aparece como ponto forte.':dance?'A dança e o ritmo prevalecem sobre o canto coletivo.':'Há espaço para alternar momentos cantados e dançantes.',
+  collective?'O repertório reconhecível tende a ser importante.':'Há abertura para escolhas menos óbvias.',
+  intense?'A expectativa é de picos de energia altos.':'A construção gradual da atmosfera merece atenção.',
+  eclectic?'Transições entre gêneros podem ser bem recebidas.':'Blocos com uma atmosfera consistente tendem a funcionar melhor.'
+ ].join(' ')
+ const prioritize=[
+  sing?'Refrões fortes e momentos de canto coletivo':dance?'Groove, ritmo e continuidade dançante':'Alternância planejada entre canto e dança',
+  brazil?'Sucessos brasileiros identificados pelo cliente':house?'House e eletrônica com groove':'O universo musical escolhido como referência para a pista',
+  nostalgia?'Músicas ligadas a memórias afetivas':'Espaço para novidades alinhadas ao gosto',
+  eclectic?'Misturas dinâmicas e passagens entre gêneros':'Sequências consistentes com transições graduais'
+ ]
+ const cautions=[
+  known?'Não apostar em longos blocos de músicas desconhecidas':niche?'Não confundir abertura para descobertas com aceitação irrestrita':'Validar faixas menos conhecidas durante o briefing',
+  distinct?'Separar o que o cliente ouve em casa do que quer na pista':personal?'Proteger faixas identitárias sem perder a leitura dos convidados':'Confirmar o equilíbrio entre preferências pessoais e festa',
+  'Conferir músicas obrigatórias e restrições antes de fechar a programação'
+ ]
+ const freedom=niche?'Ampla, mas condicionada ao contexto':known?'Mais dirigida a músicas reconhecíveis':personal?'Centrada na identidade do cliente':'Moderada, com adaptação à pista'
+ const signals=[
+  {title:'Reconhecimento',value:collective?'Alto':'Flexível',detail:collective?'Hits familiares ganham prioridade':'Existe margem para descobertas'},
+  {title:'Pico de energia',value:intense?'Intenso':'Progressivo',detail:intense?'Planejar clímax fortes':'Construir a energia em etapas'},
+  {title:'Canto coletivo',value:sing?'Prioritário':dance?'Secundário':'Equilibrado',detail:sing?'Refrões compartilhados são centrais':dance?'O groove ganha protagonismo':'Alternar formatos'},
+  {title:'Mistura de gêneros',value:eclectic?'Alta':'Controlada',detail:eclectic?'Open format e surpresas':'Blocos musicais mais coesos'}
+ ]
+ return {archetype,summary,prioritize,cautions,freedom,signals,notes:'Interpretação heurística baseada nas respostas, sujeita à validação no briefing.'}
+}
 function freeText(id,title,answers,setAnswers,placeholder,multiline=false) {
  const props={value:answers[id]||'',onChange:e=>setAnswers(prev=>({...prev,[id]:e.target.value})),placeholder,className:'w-full rounded-xl border border-white/20 bg-white/5 p-4 text-white placeholder:text-white/40 outline-none focus:border-orange-500'}
  return <label className="block space-y-2" key={id}><span className="block text-sm text-zinc-200">{title}</span>{multiline?<textarea {...props} rows={3}/>:<input {...props}/>}</label>
@@ -111,11 +173,12 @@ export default function DNAMusical() {
  const [error,setError]=useState('')
  const questions=useMemo(()=>[...common,...(specific[type]||[])], [type])
  const profile=useMemo(()=>compute(answers,questions),[answers,questions])
+ const diagnosis=useMemo(()=>interpret(answers,profile,type),[answers,profile,type])
  const chosen=questions[step]
  const category=types.find(t=>t[0]===type)
  const complete=()=>{if(!answers[chosen.id]){setError('Escolha uma alternativa para continuar.');return}setError('');if(step===questions.length-1)setFinished(true);else setStep(s=>s+1)}
  const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('')}
- const result={version:'1.0',eventType:category?.[1],answers,profile,generatedAt:new Date().toISOString()}
+ const result={version:'2.0',eventType:category?.[1],answers,profile,diagnosis,generatedAt:new Date().toISOString()}
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
  const sendEmail=()=>{const body=encodeURIComponent('DNA Musical — '+category?.[1]+'\n\n'+JSON.stringify(result,null,2));window.location.href='mailto:cimioi_saxmusic@outlook.com?subject=Meu%20DNA%20Musical&body='+body}
  return <main className="relative min-h-screen bg-[#04181B] text-[#EDEEE6]">
@@ -138,7 +201,19 @@ export default function DNAMusical() {
     <div className="mt-10 flex justify-between gap-3"><button className="rounded-xl border border-white/20 px-5 py-3" onClick={()=>step?setStep(s=>s-1):setType('')}>Voltar</button><button className="flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white" style={{background:ACCENT}} onClick={complete}>{step===questions.length-1?'Ver meu DNA':'Próxima'} <ArrowRight size={18}/></button></div>
    </motion.section>:<motion.section key="result" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} className="pt-12">
     <p className="text-xs uppercase tracking-[.3em]" style={{color:ACCENT}}>Seu resultado</p><h1 className="mt-3 text-4xl font-bold">Seu DNA Musical</h1><p className="mt-3 text-zinc-300">Um retrato inicial das preferências para a festa — para aprofundarmos juntos na curadoria.</p>
-    <div className="mt-8 space-y-6 rounded-2xl border border-white/15 bg-white/5 p-6">{categories.map(k=><div key={k}><div className="mb-2 flex justify-between text-sm"><span>{labels[k][0]}</span><span>{labels[k][1]}</span></div><div className="h-2 rounded-full bg-white/15"><div className="h-2 rounded-full" style={{width:profile[k]+'%',background:ACCENT}}/></div><p className="mt-1 text-right text-xs text-zinc-400">{profile[k]} / 100</p></div>)}</div>
+    <div className="mt-7 rounded-2xl border border-[#EC6E1A]/40 bg-[#EC6E1A]/10 p-6">
+     <p className="text-xs uppercase tracking-[.2em] text-orange-300">Identidade predominante</p>
+     <h2 className="mt-2 text-2xl font-bold md:text-3xl">{diagnosis.archetype}</h2>
+     <p className="mt-3 leading-relaxed text-zinc-200">{diagnosis.summary}</p>
+    </div>
+    <h2 className="mt-10 text-xl font-semibold">Leitura da pista</h2>
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">{diagnosis.signals.map(s=><div key={s.title} className="rounded-xl border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wider text-zinc-400">{s.title}</p><h3 className="mt-2 text-xl font-semibold text-[#EC6E1A]">{s.value}</h3><p className="mt-1 text-sm text-zinc-300">{s.detail}</p></div>)}</div>
+    <div className="mt-7 grid gap-4 sm:grid-cols-2">
+     <div className="rounded-xl border border-white/15 bg-white/5 p-5"><h3 className="font-semibold">Priorizar na curadoria</h3><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-zinc-200">{diagnosis.prioritize.map(v=><li key={v}>{v}</li>)}</ul></div>
+     <div className="rounded-xl border border-white/15 bg-white/5 p-5"><h3 className="font-semibold">Atenção no briefing</h3><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-zinc-200">{diagnosis.cautions.map(v=><li key={v}>{v}</li>)}</ul></div>
+    </div>
+    <div className="mt-6 rounded-xl border border-white/15 bg-white/5 p-5"><p className="text-xs uppercase tracking-wider text-zinc-400">Liberdade criativa sugerida</p><p className="mt-1 text-lg font-semibold">{diagnosis.freedom}</p><p className="mt-2 text-xs text-zinc-400">{diagnosis.notes}</p></div>
+    <details className="mt-6 rounded-xl border border-white/15 p-5"><summary className="cursor-pointer font-semibold">Ver indicadores complementares</summary><div className="mt-5 space-y-5">{categories.map(k=><div key={k}><div className="mb-2 flex justify-between text-sm"><span>{labels[k][0]}</span><span>{labels[k][1]}</span></div><div className="h-2 rounded-full bg-white/15"><div className="h-2 rounded-full" style={{width:profile[k]+'%',background:ACCENT}}/></div></div>)}</div><p className="mt-4 text-xs text-zinc-400">As escalas são orientativas, não probabilidades ou medidas científicas.</p></details>
     <h2 className="mt-9 text-xl font-semibold">Detalhes para sua curadoria</h2><p className="mt-2 text-sm text-zinc-400">Estes campos são opcionais. As informações não são salvas no site: exporte o arquivo ou envie por e-mail para compartilhar.</p>
     <div className="mt-5 space-y-4">{freeText('cliente','Nome do cliente ou responsáveis',answers,setAnswers,'Seu nome')}{freeText('data','Data do evento',answers,setAnswers,'Ex.: 18/03/2028')}{freeText('artistas','Artistas e estilos favoritos',answers,setAnswers,'Quais não podem faltar?',true)}{freeText('obrigatorias','Músicas obrigatórias',answers,setAnswers,'Artista — música',true)}{freeText('restricoes','Músicas ou estilos que não devem tocar',answers,setAnswers,'Restrições',true)}</div>
     <div className="mt-8 grid gap-3 sm:grid-cols-2"><button className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold" style={{background:ACCENT}} onClick={exportJSON}><Download size={17}/> Baixar briefing</button><button className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={sendEmail}><Mail size={17}/> Enviar por e-mail</button></div>
