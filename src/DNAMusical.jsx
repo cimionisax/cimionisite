@@ -30,16 +30,12 @@ const genreDetails={
 const repertoireQuestions=[
  openQ('artistas_pessoais','Quais artistas realmente fazem parte do seu gosto pessoal?','Cite até cinco. Podem ser nomes que você ouve em casa, no carro ou no dia a dia.'),
  openQ('faixas_pessoais','Quais músicas representam você, mesmo que não sejam para a festa?','Dê dois ou três exemplos e, se quiser, diga por que são importantes.'),
- q('genero_base','Qual universo musical você mais gostaria de explorar na festa?',genreChoices.map(([label,val])=>[val,{}])),
+ q('genero_base','Qual universo musical você mais gostaria de explorar na festa?',genreChoices.map(([label,val])=>[val, val==='MPB / Brasilidades'||val==='Pagode / Samba'?{brasil:2}:val==='Eletrônica / House'||val==='Pop / Dance'?{brasil:-2}:{}])),
  ...Object.entries(genreDetails).map(([genre,options])=>({...q('detalhe_'+genre.replace(/[^a-z]/gi,'_').toLowerCase(),'Dentro desse universo, qual direção combina mais com sua festa?',options.map(label=>[label,{}])),when:a=>a.genero_base===genre})),
  openQ('artistas_festa','Quais artistas você gostaria de ouvir na festa?','Podem ser diferentes dos seus favoritos pessoais.'),
  openQ('faixas_festa','Quais músicas são indispensáveis na festa?','Cite músicas e artistas; se não houver obrigatórias, escreva "Nenhuma".'),
  openQ('restricoes_festa','O que você NÃO quer ouvir na festa?','Artistas, músicas ou estilos. Se não houver restrições, escreva "Nenhuma".'),
- q('contraste','Pensando nas suas referências, qual frase te representa melhor?',[
-  ['Meu gosto pessoal deve aparecer bastante na festa',{popular:-2}],
-  ['Minhas favoritas pessoais não precisam tocar, quero uma pista envolvente',{popular:2}],
-  ['Quero algumas músicas da minha identidade e liberdade para o DJ',{mistura:1}]
- ])
+
 ]
 const common = [
  q('uso_musical','Quando você ouve música no dia a dia e pensa na festa, qual afirmação descreve melhor você?',[
@@ -57,40 +53,18 @@ const common = [
   ['Gosto se estiverem bem misturadas com clássicos',{popular:0,mistura:1}],
   ['Prefiro principalmente músicas conhecidas',{popular:3}]
  ]),
- q('ambiente','Em qual desses lugares você mais gostaria de estar?',[
-  ['Em um festival com todo mundo dançando',{energia:2,popular:1}],
-  ['Em um beach club ao pôr do sol',{energia:0,brasil:-1,mistura:-1}],
-  ['Em uma roda de amigos cantando clássicos',{nostalgia:2,popular:2,brasil:1}],
-  ['Em uma festa elegante com música envolvente',{popular:-2,mistura:-1}]
- ]),
  q('lembranca','Qual dessas experiências mais combina com sua relação com a música?',[
   ['Relembrar músicas que marcaram fases da vida',{nostalgia:3}],
   ['Descobrir sons e artistas novos',{nostalgia:-3}],
   ['Cantar sucessos com as pessoas que amo',{nostalgia:1,popular:2}],
   ['Sentir o ritmo e dançar sem parar',{energia:2}]
  ]),
- q('preferencia','Qual clima você gostaria de ver na pista?',[
-  ['Hits brasileiros que todo mundo canta',{popular:2,brasil:3}],
-  ['Pop e dance internacionais',{popular:2,brasil:-3,energia:1}],
-  ['House e eletrônica com groove',{popular:-1,brasil:-2,mistura:-1}],
-  ['Vários estilos e surpresas pela noite',{mistura:3}]
- ]),
- q('pista','Quando a festa atingir seu auge, você prefere...',[
-  ['Muita intensidade e explosão',{energia:3}],
-  ['Uma energia crescente e envolvente',{energia:-2}],
-  ['Todos cantando juntos',{popular:3,nostalgia:1}],
-  ['Uma mistura inesperada de estilos',{mistura:3}]
- ]),
  q('transicoes','Em relação à mistura de estilos na festa...',[
   ['Prefiro blocos mais longos com a mesma atmosfera',{mistura:-3}],
   ['Adoro passar de um estilo para outro',{mistura:3}],
   ['Depende do momento e dos convidados',{mistura:0,popular:1}]
  ]),
- q('remix','Quando toca uma música que você ama, o que prefere?',[
-  ['A versão original, com toda a memória que ela carrega',{nostalgia:2}],
-  ['Uma releitura ou remix surpreendente',{nostalgia:-2,mistura:1}],
-  ['Tanto faz, desde que a pista responda bem',{popular:2}]
- ]),
+
 ]
 const specific = {
  casamento:[
@@ -99,11 +73,7 @@ const specific = {
    ['Uma pista que agrade à maioria dos convidados',{popular:3}],
    ['Um equilíbrio entre nosso gosto e a energia dos convidados',{popular:1,mistura:1}]
   ]),
-  q('casamento_momento','Qual momento vocês mais querem ver acontecer?',[
-   ['Todos cantando juntos um grande clássico',{nostalgia:2,popular:2}],
-   ['Uma pista tomada pela energia de um hit',{energia:3}],
-   ['Uma sequência elegante e envolvente',{energia:-1,popular:-1}]
-  ])
+
  ],
  aniversario:[
   q('aniversario_memoria','O que mais deveria aparecer na festa?',[
@@ -145,7 +115,7 @@ const labels = {
  mistura:['Atmosferas consistentes','Mistura de estilos']
 }
 function interpret(answers,profile,type) {
- const preferred=answers.preferencia||''
+ const preferred=answers.genero_base||''
  const sing=answers.foco_pista?.startsWith('Todo mundo cantando') || answers.pista==='Todos cantando juntos'
  const dance=answers.foco_pista?.startsWith('Todo mundo dançando')
  const known=answers.surpresa?.startsWith('Prefiro')
@@ -153,8 +123,8 @@ function interpret(answers,profile,type) {
  const personal=answers.uso_musical?.startsWith('Quero ouvir na festa')
  const distinct=answers.uso_musical?.startsWith('Meu gosto pessoal')
  const collective=profile.popular>=65
- const brazil=preferred.startsWith('Hits brasileiros')
- const house=preferred.startsWith('House')
+ const brazil=['MPB / Brasilidades','Pagode / Samba','Funk / Urbano'].includes(preferred)
+ const house=preferred==='Eletrônica / House'
  const eclectic=profile.mistura>=65
  const intense=profile.energia>=65
  const nostalgia=profile.nostalgia>=65
@@ -173,7 +143,7 @@ function interpret(answers,profile,type) {
  ].join(' ')
  const prioritize=[
   sing?'Refrões fortes e momentos de canto coletivo':dance?'Groove, ritmo e continuidade dançante':'Alternância planejada entre canto e dança',
-  brazil?'Sucessos brasileiros identificados pelo cliente':house?'House e eletrônica com groove':'O universo musical escolhido como referência para a pista',
+  brazil?'Sucessos brasileiros identificados pelo cliente':house?'House e eletrônica com groove':('Explorar o repertório de '+(preferred||'estilos escolhidos')),
   nostalgia?'Músicas ligadas a memórias afetivas':'Espaço para novidades alinhadas ao gosto',
   eclectic?'Misturas dinâmicas e passagens entre gêneros':'Sequências consistentes com transições graduais'
  ]
@@ -208,7 +178,7 @@ export default function DNAMusical() {
  const category=types.find(t=>t[0]===type)
  const complete=()=>{if(chosen.required!==false && !String(answers[chosen.id]||'').trim()){setError(chosen.kind==='text'?'Preencha esse campo para continuar.':'Escolha uma alternativa para continuar.');return}setError('');if(step===questions.length-1)setFinished(true);else setStep(s=>s+1)}
  const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('')}
- const result={version:'3.0',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
+ const result={version:'3.1',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
  const sendEmail=()=>{const body=encodeURIComponent('DNA Musical — '+category?.[1]+'\n\n'+JSON.stringify(result,null,2));window.location.href='mailto:cimioi_saxmusic@outlook.com?subject=Meu%20DNA%20Musical&body='+body}
  return <main className="relative min-h-screen bg-[#04181B] text-[#EDEEE6]">
