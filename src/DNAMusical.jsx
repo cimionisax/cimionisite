@@ -11,6 +11,36 @@ const types = [
 ]
 const categories = ['nostalgia','energia','popular','brasil','mistura']
 const q = (id,title,options,types=null) => ({id,title,options:options.map(([label,weights])=>({label,weights})),types})
+const openQ=(id,title,hint,required=true)=>({id,title,hint,required,kind:'text'})
+const genreChoices=[
+ ['Pop e dance','Pop / Dance'],['Eletrônica e house','Eletrônica / House'],['Pagode e samba','Pagode / Samba'],
+ ['Funk e ritmos urbanos','Funk / Urbano'],['Rock e clássicos','Rock / Clássicos'],['Sertanejo e country','Sertanejo / Country'],
+ ['MPB e brasilidades','MPB / Brasilidades'],['Reggaeton e ritmos latinos','Latino / Reggaeton']
+]
+const genreDetails={
+ 'Pop / Dance':['Pop de pista e hits atuais','Clássicos pop dos anos 2000/2010','Disco, funk e groove'],
+ 'Eletrônica / House':['House melódico e orgânico','Afro House / Deep House','EDM e grandes hits eletrônicos'],
+ 'Pagode / Samba':['Pagode romântico','Pagode de festa e samba','Clássicos de roda'],
+ 'Funk / Urbano':['Funk comercial leve','Funk de pista mais intenso','Hip-hop e urban pop'],
+ 'Rock / Clássicos':['Rock clássico','Pop rock nacional','Rock de alta energia'],
+ 'Sertanejo / Country':['Sertanejo universitário','Sertanejo clássico','Country internacional'],
+ 'MPB / Brasilidades':['MPB e groove brasileiro','Axé e carnaval','Forró e ritmos regionais'],
+ 'Latino / Reggaeton':['Reggaeton contemporâneo','Clássicos latinos','Pop latino e salsa']
+}
+const repertoireQuestions=[
+ openQ('artistas_pessoais','Quais artistas realmente fazem parte do seu gosto pessoal?','Cite até cinco. Podem ser nomes que você ouve em casa, no carro ou no dia a dia.'),
+ openQ('faixas_pessoais','Quais músicas representam você, mesmo que não sejam para a festa?','Dê dois ou três exemplos e, se quiser, diga por que são importantes.'),
+ q('genero_base','Qual universo musical você mais gostaria de explorar na festa?',genreChoices.map(([label,val])=>[val,{}])),
+ ...Object.entries(genreDetails).map(([genre,options])=>({...q('detalhe_'+genre.replace(/[^a-z]/gi,'_').toLowerCase(),'Dentro desse universo, qual direção combina mais com sua festa?',options.map(label=>[label,{}])),when:a=>a.genero_base===genre})),
+ openQ('artistas_festa','Quais artistas você gostaria de ouvir na festa?','Podem ser diferentes dos seus favoritos pessoais.'),
+ openQ('faixas_festa','Quais músicas são indispensáveis na festa?','Cite músicas e artistas; se não houver obrigatórias, escreva "Nenhuma".'),
+ openQ('restricoes_festa','O que você NÃO quer ouvir na festa?','Artistas, músicas ou estilos. Se não houver restrições, escreva "Nenhuma".'),
+ q('contraste','Pensando nas suas referências, qual frase te representa melhor?',[
+  ['Meu gosto pessoal deve aparecer bastante na festa',{popular:-2}],
+  ['Minhas favoritas pessoais não precisam tocar, quero uma pista envolvente',{popular:2}],
+  ['Quero algumas músicas da minha identidade e liberdade para o DJ',{mistura:1}]
+ ])
+]
 const common = [
  q('uso_musical','Quando você ouve música no dia a dia e pensa na festa, qual afirmação descreve melhor você?',[
   ['Quero ouvir na festa quase tudo que gosto em casa',{popular:-2}],
@@ -171,14 +201,14 @@ export default function DNAMusical() {
  const [answers,setAnswers]=useState({})
  const [finished,setFinished]=useState(false)
  const [error,setError]=useState('')
- const questions=useMemo(()=>[...common,...(specific[type]||[])], [type])
+ const questions=useMemo(()=>[...common,...repertoireQuestions,...(specific[type]||[])].filter(item=>!item.when||item.when(answers)), [type,answers.genero_base])
  const profile=useMemo(()=>compute(answers,questions),[answers,questions])
  const diagnosis=useMemo(()=>interpret(answers,profile,type),[answers,profile,type])
  const chosen=questions[step]
  const category=types.find(t=>t[0]===type)
- const complete=()=>{if(!answers[chosen.id]){setError('Escolha uma alternativa para continuar.');return}setError('');if(step===questions.length-1)setFinished(true);else setStep(s=>s+1)}
+ const complete=()=>{if(chosen.required!==false && !String(answers[chosen.id]||'').trim()){setError(chosen.kind==='text'?'Preencha esse campo para continuar.':'Escolha uma alternativa para continuar.');return}setError('');if(step===questions.length-1)setFinished(true);else setStep(s=>s+1)}
  const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('')}
- const result={version:'2.0',eventType:category?.[1],answers,profile,diagnosis,generatedAt:new Date().toISOString()}
+ const result={version:'3.0',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
  const sendEmail=()=>{const body=encodeURIComponent('DNA Musical — '+category?.[1]+'\n\n'+JSON.stringify(result,null,2));window.location.href='mailto:cimioi_saxmusic@outlook.com?subject=Meu%20DNA%20Musical&body='+body}
  return <main className="relative min-h-screen bg-[#04181B] text-[#EDEEE6]">
@@ -196,7 +226,8 @@ export default function DNAMusical() {
     <div className="flex justify-between text-xs uppercase tracking-widest text-zinc-400"><span>{category?.[1]}</span><span>Pergunta {step+1} de {questions.length}</span></div>
     <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full transition-all" style={{background:ACCENT,width:((step+1)/questions.length*100)+'%'}}/></div>
     <h1 className="mt-12 text-2xl font-bold md:text-4xl">{chosen.title}</h1>
-    <div className="mt-8 space-y-3">{chosen.options.map(o=><button key={o.label} type="button" onClick={()=>{setAnswers(a=>({...a,[chosen.id]:o.label}));setError('')}} className={'w-full rounded-xl border px-5 py-4 text-left transition '+(answers[chosen.id]===o.label?'border-[#EC6E1A] bg-[#EC6E1A]/15':'border-white/15 bg-white/5 hover:border-white/40')} aria-pressed={answers[chosen.id]===o.label}>{o.label}</button>)}</div>
+    <div className="mt-3 text-sm text-zinc-400">{chosen.hint||''}</div>
+    <div className="mt-8 space-y-3">{chosen.kind==='text'?<textarea rows={4} aria-label={chosen.title} className="w-full rounded-xl border border-white/20 bg-white/5 p-4 text-white placeholder:text-zinc-500 focus:border-orange-500" placeholder="Escreva aqui suas referências..." value={answers[chosen.id]||''} onChange={e=>{setAnswers(a=>({...a,[chosen.id]:e.target.value}));setError('')}}/>:chosen.options.map(o=><button key={o.label} type="button" onClick={()=>{setAnswers(a=>({...a,[chosen.id]:o.label}));setError('')}} className={'w-full rounded-xl border px-5 py-4 text-left transition '+(answers[chosen.id]===o.label?'border-[#EC6E1A] bg-[#EC6E1A]/15':'border-white/15 bg-white/5 hover:border-white/40')} aria-pressed={answers[chosen.id]===o.label}>{o.label}</button>)}</div>
     {error&&<p role="alert" className="mt-4 text-sm text-orange-300">{error}</p>}
     <div className="mt-10 flex justify-between gap-3"><button className="rounded-xl border border-white/20 px-5 py-3" onClick={()=>step?setStep(s=>s-1):setType('')}>Voltar</button><button className="flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white" style={{background:ACCENT}} onClick={complete}>{step===questions.length-1?'Ver meu DNA':'Próxima'} <ArrowRight size={18}/></button></div>
    </motion.section>:<motion.section key="result" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} className="pt-12">
@@ -206,6 +237,12 @@ export default function DNAMusical() {
      <h2 className="mt-2 text-2xl font-bold md:text-3xl">{diagnosis.archetype}</h2>
      <p className="mt-3 leading-relaxed text-zinc-200">{diagnosis.summary}</p>
     </div>
+    <h2 className="mt-10 text-xl font-semibold">Identidade musical x repertório da festa</h2>
+    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="rounded-xl border border-white/15 bg-white/5 p-5"><p className="text-xs uppercase tracking-wide text-zinc-400">Seu universo pessoal</p><p className="mt-2 whitespace-pre-wrap text-sm">{answers.artistas_pessoais}</p><p className="mt-3 whitespace-pre-wrap text-sm text-zinc-300">{answers.faixas_pessoais}</p></div>
+      <div className="rounded-xl border border-[#EC6E1A]/40 bg-[#EC6E1A]/10 p-5"><p className="text-xs uppercase tracking-wide text-orange-300">Seu repertório de festa</p><p className="mt-2 font-semibold">{answers.genero_base}</p><p className="mt-2 whitespace-pre-wrap text-sm">{answers.artistas_festa}</p><p className="mt-3 whitespace-pre-wrap text-sm text-zinc-300">{answers.faixas_festa}</p></div>
+    </div>
+    <div className="mt-4 rounded-xl border border-white/15 bg-white/5 p-5"><p className="font-semibold">Não tocar</p><p className="mt-2 whitespace-pre-wrap text-sm text-zinc-300">{answers.restricoes_festa}</p></div>
     <h2 className="mt-10 text-xl font-semibold">Leitura da pista</h2>
     <div className="mt-4 grid gap-3 sm:grid-cols-2">{diagnosis.signals.map(s=><div key={s.title} className="rounded-xl border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wider text-zinc-400">{s.title}</p><h3 className="mt-2 text-xl font-semibold text-[#EC6E1A]">{s.value}</h3><p className="mt-1 text-sm text-zinc-300">{s.detail}</p></div>)}</div>
     <div className="mt-7 grid gap-4 sm:grid-cols-2">
@@ -215,7 +252,7 @@ export default function DNAMusical() {
     <div className="mt-6 rounded-xl border border-white/15 bg-white/5 p-5"><p className="text-xs uppercase tracking-wider text-zinc-400">Liberdade criativa sugerida</p><p className="mt-1 text-lg font-semibold">{diagnosis.freedom}</p><p className="mt-2 text-xs text-zinc-400">{diagnosis.notes}</p></div>
     <details className="mt-6 rounded-xl border border-white/15 p-5"><summary className="cursor-pointer font-semibold">Ver indicadores complementares</summary><div className="mt-5 space-y-5">{categories.map(k=><div key={k}><div className="mb-2 flex justify-between text-sm"><span>{labels[k][0]}</span><span>{labels[k][1]}</span></div><div className="h-2 rounded-full bg-white/15"><div className="h-2 rounded-full" style={{width:profile[k]+'%',background:ACCENT}}/></div></div>)}</div><p className="mt-4 text-xs text-zinc-400">As escalas são orientativas, não probabilidades ou medidas científicas.</p></details>
     <h2 className="mt-9 text-xl font-semibold">Detalhes para sua curadoria</h2><p className="mt-2 text-sm text-zinc-400">Estes campos são opcionais. As informações não são salvas no site: exporte o arquivo ou envie por e-mail para compartilhar.</p>
-    <div className="mt-5 space-y-4">{freeText('cliente','Nome do cliente ou responsáveis',answers,setAnswers,'Seu nome')}{freeText('data','Data do evento',answers,setAnswers,'Ex.: 18/03/2028')}{freeText('artistas','Artistas e estilos favoritos',answers,setAnswers,'Quais não podem faltar?',true)}{freeText('obrigatorias','Músicas obrigatórias',answers,setAnswers,'Artista — música',true)}{freeText('restricoes','Músicas ou estilos que não devem tocar',answers,setAnswers,'Restrições',true)}</div>
+    <div className="mt-5 space-y-4">{freeText('cliente','Nome do cliente ou responsáveis',answers,setAnswers,'Seu nome')}{freeText('data','Data do evento',answers,setAnswers,'Ex.: 18/03/2028')}</div>
     <div className="mt-8 grid gap-3 sm:grid-cols-2"><button className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold" style={{background:ACCENT}} onClick={exportJSON}><Download size={17}/> Baixar briefing</button><button className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={sendEmail}><Mail size={17}/> Enviar por e-mail</button></div>
     <button className="mt-6 flex items-center gap-2 text-sm text-zinc-400 hover:text-white" onClick={reset}><RotateCcw size={16}/> Começar novamente</button>
    </motion.section>}
