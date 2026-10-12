@@ -131,7 +131,7 @@ function compute(answers, questions) {
  const sums=Object.fromEntries(categories.map(k=>[k,0]))
  const counts=Object.fromEntries(categories.map(k=>[k,0]))
  questions.forEach(item=>{
-  const option=item.options.find(o=>o.label===answers[item.id])
+  const option=item.options?.find(o=>o.label===answers[item.id])
   if (!option) return
   Object.entries(option.weights).forEach(([key,value])=>{sums[key]+=value;counts[key]++})
  })
