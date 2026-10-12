@@ -7,8 +7,19 @@ const allowedOrigins = new Set([
   'https://cimionimateus.com.br',
   'https://www.cimionimateus.com.br',
 ])
+const isAllowedOrigin = (origin: string | null) => {
+  if (!origin) return true
+  if (allowedOrigins.has(origin)) return true
+  try {
+    const url = new URL(origin)
+    return url.protocol === 'https:' && (
+      url.hostname === 'stackblitz.com' ||
+      url.hostname.endsWith('.webcontainer.io')
+    )
+  } catch { return false }
+}
 const corsHeaders = (origin: string | null) => ({
-  'Access-Control-Allow-Origin': origin && allowedOrigins.has(origin) ? origin : 'https://cimionimateus.com.br',
+  'Access-Control-Allow-Origin': origin && isAllowedOrigin(origin) ? origin : 'https://cimionimateus.com.br',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'content-type, apikey, authorization, x-client-info',
   'Vary': 'Origin',
@@ -23,7 +34,7 @@ Deno.serve(async req => {
   const origin = req.headers.get('origin')
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) })
   if (req.method !== 'POST') return reply(405, { error: 'Método não permitido.' }, origin)
-  if (origin && !allowedOrigins.has(origin)) return reply(403, { error: 'Origem não permitida.' }, origin)
+  if (origin && !isAllowedOrigin(origin)) return reply(403, { error: 'Origem não permitida.' }, origin)
   const size = Number(req.headers.get('content-length') || 0)
   if (size > 64000) return reply(413, { error: 'Formulário muito grande.' }, origin)
   let data: unknown
