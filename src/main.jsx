@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import DNAMusical from './DNAMusical.jsx'
+import DNAAdmin from './DNAAdmin.jsx'
 import './index.css'
 
 class ErrorBoundary extends React.Component {
@@ -23,13 +24,13 @@ class ErrorBoundary extends React.Component {
   }
 }
 function SiteRouter() {
-  const [isDNA, setIsDNA] = useState(window.location.hash.startsWith('#/dna-musical'))
+  const [route,setRoute] = useState(window.location.hash)
   useEffect(() => {
-    const update = () => setIsDNA(window.location.hash.startsWith('#/dna-musical'))
+    const update = () => setRoute(window.location.hash)
     window.addEventListener('hashchange', update)
     return () => window.removeEventListener('hashchange', update)
   }, [])
-  return <ErrorBoundary>{isDNA ? <DNAMusical /> : <App />}</ErrorBoundary>
+  return <ErrorBoundary>{route.startsWith('#/admin') ? <DNAAdmin /> : route.startsWith('#/dna-musical') ? <DNAMusical /> : <App />}</ErrorBoundary>
 }
 createRoot(document.getElementById('root')).render(
   <React.StrictMode><SiteRouter /></React.StrictMode>
