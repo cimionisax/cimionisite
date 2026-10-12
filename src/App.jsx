@@ -66,16 +66,15 @@ export default function App() {
             <img src="/images/logo-light.png" alt="Logo" className="h-10" />
           </a>
 
-          {/* botão compacto à direita */}
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-2xl px-4 py-2 inline-flex items-center gap-2"
-            style={{ backgroundColor: BRAND.accent }}
-          >
-            <Phone className="w-4 h-4" /> WhatsApp
-          </a>
+          {/* Acesso público ao questionário e atendimento */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <a href="#/dna-musical" className="inline-flex items-center gap-2 rounded-xl border border-orange-500/50 px-3 py-2 text-xs font-semibold text-orange-200 transition hover:bg-orange-500/10 sm:text-sm">
+              <Music2 className="h-4 w-4" /> DNA Musical
+            </a>
+            <a href={waLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-sm sm:px-4" style={{backgroundColor:BRAND.accent}}>
+              <Phone className="h-4 w-4" /> WhatsApp
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -187,6 +186,38 @@ export default function App() {
             className="mt-5 inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold text-white md:mt-0"
             style={{backgroundColor:BRAND.accent}}>Solicitar proposta<ArrowRight className="h-4 w-4"/></a>
         </div>
+      </section>
+
+      {/* DNA Musical — experiência de curadoria */}
+      <section id="dna-musical" className="mx-auto max-w-6xl px-4 py-14 md:py-20">
+        <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{once:true}}
+          className="relative overflow-hidden rounded-3xl border border-orange-500/30 bg-[#09272A]/95 p-7 shadow-2xl md:p-12">
+          <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" aria-hidden="true" />
+          <div className="relative grid items-center gap-7 md:grid-cols-[1.5fr_1fr]">
+            <div>
+              <p className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[.22em] text-orange-300">
+                <Music2 className="h-4 w-4" /> Curadoria musical personalizada
+              </p>
+              <h2 className="max-w-xl text-3xl font-bold leading-tight text-white md:text-5xl">
+                Sua festa. <span className="text-[#EC6E1A]">Sua identidade musical.</span>
+              </h2>
+              <p className="mt-5 max-w-xl leading-relaxed text-zinc-200">
+                Cada festa tem uma história. Descubra a sua identidade sonora e transforme referências, memórias e preferências em uma curadoria musical personalizada.
+              </p>
+              <a href="#/dna-musical" className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-[#EC6E1A] px-6 py-3 font-semibold text-white transition hover:bg-[#d65d10]">
+                Descobrir meu DNA Musical <ArrowRight className="h-5 w-5" />
+              </a>
+            </div>
+            <div className="hidden rounded-2xl border border-white/10 bg-white/5 p-7 md:block">
+              <p className="text-xs uppercase tracking-widest text-orange-300">A experiência</p>
+              <div className="mt-5 space-y-5 text-sm text-zinc-100">
+                <p className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 shrink-0 text-orange-400"/> Suas referências musicais</p>
+                <p className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 shrink-0 text-orange-400"/> O clima ideal da pista</p>
+                <p className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 shrink-0 text-orange-400"/> Um perfil exclusivo do evento</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* Músicas — agora com EMBED do Instagram */}
