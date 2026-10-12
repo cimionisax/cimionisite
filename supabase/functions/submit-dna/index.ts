@@ -1,6 +1,6 @@
 // Deploy as Supabase Edge Function named "submit-dna" with JWT verification disabled.
 // Requires default SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY secrets provided by Supabase.
-// Before production: enable CAPTCHA / abuse protection and review privacy notice.
+// Run supabase/rate-limit-setup.sql before deploying; review privacy notice before launch.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const allowedOrigins = new Set([
@@ -44,6 +44,19 @@ Deno.serve(async req => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   if (!url || !serviceKey) return reply(503, { error: 'Serviço ainda não configurado.' }, origin)
   const db = createClient(url, serviceKey, { auth: { persistSession: false } })
+  // Best-effort network limit. Origin headers alone are not anti-bot protection.
+  // Hash the network address with a server-only secret; no raw IP is stored.
+  const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  const remote = req.headers.get('cf-connecting-ip') || forwarded || 'unavailable'
+  const encoded = new TextEncoder().encode(remote + ':' + serviceKey)
+  const digest = await crypto.subtle.digest('SHA-256', encoded)
+  const token = Array.from(new Uint8Array(digest), v => v.toString(16).padStart(2, '0')).join('')
+  const { data: allowed, error: limitError } = await db.rpc('reserve_dna_submission', { p_token_hash: token })
+  if (limitError) {
+    console.error('Rate limiter failure:', limitError.code)
+    return reply(503, { error: 'Serviço temporariamente indisponível.' }, origin)
+  }
+  if (!allowed) return reply(429, { error: 'Limite de envios atingido. Tente novamente mais tarde.' }, origin)
   const { error } = await db.from('dna_submissions').insert({
     client_name: name, event_date: eventDate, event_type: eventType,
     answers, profile, diagnosis, status: 'received'
