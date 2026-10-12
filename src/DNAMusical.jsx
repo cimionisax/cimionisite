@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Music2, RotateCcw, Download, Mail } from 'lucide-react'
+import { ArrowLeft, ArrowRight, RotateCcw, Download, Mail } from 'lucide-react'
 
 const ACCENT = '#EC6E1A'
 const types = [
@@ -118,9 +118,10 @@ export default function DNAMusical() {
  const result={version:'1.0',eventType:category?.[1],answers,profile,generatedAt:new Date().toISOString()}
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
  const sendEmail=()=>{const body=encodeURIComponent('DNA Musical — '+category?.[1]+'\n\n'+JSON.stringify(result,null,2));window.location.href='mailto:cimioi_saxmusic@outlook.com?subject=Meu%20DNA%20Musical&body='+body}
- return <main className="min-h-screen bg-[#04181B] text-[#EDEEE6]" style={{backgroundImage:'radial-gradient(ellipse at top right, #124147 0%, #04181B 55%)'}}>
-  <div className="mx-auto max-w-3xl px-5 py-8 md:py-14">
-   <div className="flex items-center justify-between border-b border-white/10 pb-5"><a href="/" className="flex items-center gap-2 text-sm text-white/80 hover:text-white"><ArrowLeft size={17}/> Voltar ao site</a><span className="flex items-center gap-2 text-xs uppercase tracking-[.22em]" style={{color:ACCENT}}><Music2 size={17}/> Cimioni Mateus</span></div>
+ return <main className="relative min-h-screen bg-[#04181B] text-[#EDEEE6]">
+  <div className="pointer-events-none fixed inset-0" style={{backgroundImage:"linear-gradient(180deg, rgba(4,24,27,.86), rgba(4,24,27,.90)), url('/images/bg-cimioni.jpg')",backgroundPosition:'center center',backgroundSize:'cover',backgroundRepeat:'no-repeat'}} aria-hidden="true" />
+  <div className="relative mx-auto max-w-3xl px-5 py-8 md:py-14">
+   <div className="flex items-center justify-between border-b border-white/10 pb-5"><a href="/" className="flex items-center gap-2 text-sm text-white/80 hover:text-white"><ArrowLeft size={17}/> Voltar ao site</a><img src="/images/logo-light.png" alt="Cimioni Mateus" className="h-12 w-auto max-w-[175px] object-contain md:h-16" /></div>
    <AnimatePresence mode="wait">
    {!type?<motion.section key="welcome" initial={{opacity:0,y:15}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-15}} className="pt-14">
     <p className="text-xs uppercase tracking-[.3em]" style={{color:ACCENT}}>Curadoria musical personalizada</p>
