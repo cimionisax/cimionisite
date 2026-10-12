@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, RotateCcw, Download, Mail, Printer } from 'lucide-react'
+import { ArrowLeft, ArrowRight, RotateCcw, Download, Mail, Printer, Send } from 'lucide-react'
+import { submitDNA } from './dnaSupabase.js'
 
 const ACCENT = '#EC6E1A'
 const types = [
@@ -177,14 +178,30 @@ export default function DNAMusical() {
  const [answers,setAnswers]=useState({})
  const [finished,setFinished]=useState(false)
  const [error,setError]=useState('')
+ const [submitState,setSubmitState]=useState('idle')
+ const [submitMessage,setSubmitMessage]=useState('')
  const questions=useMemo(()=>[...common,...repertoireQuestions,...(specific[type]||[])].filter(item=>!item.when||item.when(answers)), [type,answers.genero_base])
  const profile=useMemo(()=>compute(answers,questions),[answers,questions])
  const diagnosis=useMemo(()=>interpret(answers,profile,type),[answers,profile,type])
  const chosen=questions[step]
  const category=types.find(t=>t[0]===type)
  const complete=()=>{if(chosen.required!==false && !String(answers[chosen.id]||'').trim()){setError(chosen.kind==='text'?'Preencha esse campo para continuar.':'Escolha uma alternativa para continuar.');return}setError('');if(step===questions.length-1)setFinished(true);else setStep(s=>s+1)}
- const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('')}
+ const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('');setSubmitState('idle');setSubmitMessage('')}
  const result={version:'3.2',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,remixPreference:answers.versoes_remixes,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
+ const sendToDJ=async()=>{
+  if(submitState==='sending'||submitState==='success')return
+  if(!String(answers.cliente||'').trim()){setSubmitMessage('Preencha seu nome antes de enviar o briefing.');return}
+  setSubmitState('sending')
+  setSubmitMessage('')
+  try{
+    await submitDNA(result)
+    setSubmitState('success')
+    setSubmitMessage('Briefing recebido! Seu relatório pode ser salvo em PDF.')
+  }catch(e){
+    setSubmitState('error')
+    setSubmitMessage(e.message||'Não foi possível enviar. Tente novamente.')
+  }
+ }
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
  const exportClientPDF=async()=>{
   const report=document.querySelector('.dna-print')
@@ -309,6 +326,13 @@ export default function DNAMusical() {
       <div className="report-notes"><p><strong>Originais e remixes</strong> {answers.versoes_remixes||'A definir'}</p><p><strong>Restrições</strong> {answers.restricoes_festa||'Nenhuma informada'}</p></div>
       <footer><span>Este é o ponto de partida. A curadoria final nasce da nossa conversa e da energia do seu evento.</span><b>CIMIONI MATEUS · DJ & SAX LIVE</b></footer>
     </section>
+    <div className="mt-7 rounded-2xl border border-orange-500/30 bg-white/5 p-5">
+      <h3 className="font-semibold">Enviar seu DNA Musical</h3>
+      <p className="mt-2 text-sm text-zinc-300">Ao enviar, seus dados e preferências musicais serão usados exclusivamente para organizar o briefing e preparar a curadoria do evento.</p>
+      <button type="button" disabled={submitState==='sending'||submitState==='success'} onClick={sendToDJ} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#EC6E1A] px-5 py-3 font-semibold text-white disabled:opacity-60"><Send size={17}/>{submitState==='sending'?'Enviando...':submitState==='success'?'Briefing enviado':'Enviar briefing para Cimioni Mateus'}</button>
+      {submitMessage&&<p role="status" className="mt-3 text-sm text-zinc-200">{submitMessage}</p>}
+      <p className="mt-3 text-xs text-zinc-400">O envio automático depende da ativação da função segura no Supabase. Se não funcionar, use a opção de baixar o briefing.</p>
+    </div>
     <div className="mt-8 grid gap-3 sm:grid-cols-3"><button type="button" className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={exportClientPDF}><Printer size={17}/> Salvar PDF</button><button className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold" style={{background:ACCENT}} onClick={exportJSON}><Download size={17}/> Baixar briefing</button><button className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={sendEmail}><Mail size={17}/> Enviar por e-mail</button></div>
     <button className="mt-6 flex items-center gap-2 text-sm text-zinc-400 hover:text-white" onClick={reset}><RotateCcw size={16}/> Começar novamente</button>
    </motion.section>}
