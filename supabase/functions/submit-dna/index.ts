@@ -48,8 +48,12 @@ Deno.serve(async req => {
   }
   const name = String(answers.cliente || '').trim().slice(0, 200)
   const dateString = String(answers.data || '').trim()
-  // Client date is optional for now; store it in answers, not event_date, if not ISO.
-  const eventDate = /^\d{4}-\d{2}-\d{2}$/.test(dateString) ? dateString : null
+  // Accept Brazilian DD/MM/YYYY and ISO YYYY-MM-DD dates.
+  const br = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dateString)
+  const iso = br ? `${br[3]}-${br[2]}-${br[1]}` : dateString
+  const eventDate = /^\d{4}-\d{2}-\d{2}$/.test(iso) &&
+    !Number.isNaN(Date.parse(iso+'T12:00:00Z')) &&
+    new Date(iso+'T12:00:00Z').toISOString().slice(0,10) === iso ? iso : null
   if (!name) return reply(400, { error: 'Informe seu nome antes de enviar.' }, origin)
   const url = Deno.env.get('SUPABASE_URL')
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
