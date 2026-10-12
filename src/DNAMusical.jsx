@@ -186,6 +186,43 @@ export default function DNAMusical() {
  const reset=()=>{setType('');setStep(0);setAnswers({});setFinished(false);setError('')}
  const result={version:'3.2',eventType:category?.[1],answers,profile,diagnosis,repertoire:{personalArtists:answers.artistas_pessoais,personalSongs:answers.faixas_pessoais,partyGenre:answers.genero_base,remixPreference:answers.versoes_remixes,partyArtists:answers.artistas_festa,partySongs:answers.faixas_festa,restrictions:answers.restricoes_festa},generatedAt:new Date().toISOString()}
  const exportJSON=()=>{const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dna-musical.json';a.click();URL.revokeObjectURL(url)}
+ const exportClientPDF=()=>{
+  const report=document.querySelector('.dna-print')
+  if(!report) return
+  const popup=window.open('','_blank','width=900,height=1100')
+  if(!popup){alert('Permita pop-ups para salvar o PDF.');return}
+  const stylesheet=Array.from(document.styleSheets).find(s=>s.href&&s.href.includes('index')) // optional
+  const content=report.innerHTML.replaceAll('src="/images/','src="'+window.location.origin+'/images/')
+  const styles=`
+  @page{size:A4;margin:12mm}
+  *{box-sizing:border-box;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  html,body{margin:0;padding:0;background:#10252B;color:#F3F1EA;font:11px/1.45 Arial,Helvetica,sans-serif}
+  .dna-print{display:block;background:#10252B;color:#F3F1EA;width:100%;margin:0;padding:18px 20px;overflow:visible}
+  .report-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:13px;border-bottom:1px solid #EC6E1A}
+  .report-head img{width:130px;height:auto;max-height:65px;object-fit:contain}
+  .report-head>div{text-align:right}.report-head span,.report-hero small,.report-columns small,.report-facts small{display:block;color:#F5A772;font-size:9px;letter-spacing:1.4px;font-weight:600}
+  h1{font-size:24px;letter-spacing:1px;margin:3px 0 0} .report-head p{margin:2px 0;color:#CCD9D7;font-size:11px}
+  .report-meta{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;color:#D2DAD8;font-size:10px}
+  .report-meta span:not(:last-child):after{content:'·';padding-left:10px;color:#EC6E1A}
+  .report-hero{background:#19383E;padding:17px 18px;border-left:3px solid #EC6E1A;border-radius:5px;break-inside:avoid}
+  .report-hero h2{font-size:22px;color:#FFF;margin:4px 0 7px}.report-hero p{margin:0;font-size:11px;line-height:1.5}
+  h3{font-size:13px;font-weight:700;color:#FFF;margin:17px 0 8px;border-bottom:1px solid #4A6264;padding-bottom:5px}
+  .report-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.report-facts>div,.report-columns>div{background:#173137;border:1px solid #3B5457;border-radius:5px;padding:10px;break-inside:avoid}
+  .report-facts strong{display:block;color:#FFF;font-size:12px;margin-top:5px}
+  .report-columns{display:grid;grid-template-columns:1fr 1fr;gap:9px}.report-columns p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0;font-size:10.5px}
+  .report-priorities{margin:5px 0 11px;padding-left:17px;columns:2;column-gap:22px}.report-priorities li{break-inside:avoid;margin-bottom:5px}
+  .report-notes{background:#173137;border-radius:5px;padding:10px 12px}.report-notes p{margin:4px 0;white-space:pre-wrap;overflow-wrap:anywhere}.report-notes strong{display:block;color:#F5A772;font-size:9px;text-transform:uppercase;letter-spacing:1px}
+  footer{border-top:1px solid #EC6E1A;margin-top:17px;padding-top:9px;display:flex;justify-content:space-between;gap:18px;align-items:center;font-size:9px;color:#CDDBD7}footer b{color:#F5A772;white-space:nowrap;font-size:8px}
+  @media print{html,body{background:#10252B!important}.dna-print{padding:10px 12px}.report-hero,.report-facts,.report-columns,.report-notes,footer{break-inside:avoid}}
+  `
+  popup.document.open()
+  popup.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><title>DNA Musical · Cimioni Mateus</title><style>'+styles+'</style></head><body><section class="dna-print">'+content+'</section></body></html>')
+  popup.document.close()
+  const imgs=Array.from(popup.document.images)
+  Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve}))).then(()=>{
+    popup.focus();popup.print()
+  })
+ }
  const sendEmail=()=>{const body=encodeURIComponent('DNA Musical — '+category?.[1]+'\n\n'+JSON.stringify(result,null,2));window.location.href='mailto:cimioi_saxmusic@outlook.com?subject=Meu%20DNA%20Musical&body='+body}
  return <main className="relative min-h-screen bg-[#04181B] text-[#EDEEE6]">
   <div className="pointer-events-none fixed inset-0" style={{backgroundImage:"linear-gradient(180deg, rgba(4,24,27,.86), rgba(4,24,27,.90)), url('/images/bg-cimioni.jpg')",backgroundPosition:'center center',backgroundSize:'cover',backgroundRepeat:'no-repeat'}} aria-hidden="true" />
@@ -231,23 +268,22 @@ export default function DNAMusical() {
     <h2 className="mt-9 text-xl font-semibold">Detalhes para sua curadoria</h2><p className="mt-2 text-sm text-zinc-400">Estes campos são opcionais. As informações não são salvas no site: exporte o arquivo ou envie por e-mail para compartilhar.</p>
     <div className="mt-5 space-y-4">{freeText('cliente','Nome do cliente ou responsáveis',answers,setAnswers,'Seu nome')}{freeText('data','Data do evento',answers,setAnswers,'Ex.: 18/03/2028')}</div>
     <section className="dna-print" aria-label="Relatório musical para PDF">
-      <header className="dna-print-header">
+      <header className="report-head">
         <img src="/images/logo-light.png" alt="Cimioni Mateus" />
-        <div><p>CURADORIA MUSICAL PERSONALIZADA</p><h1>DNA MUSICAL</h1></div>
+        <div><span>EXPERIÊNCIA DE CURADORIA MUSICAL</span><h1>DNA MUSICAL</h1><p>Uma trilha sonora com a sua identidade</p></div>
       </header>
-      <p className="dna-print-sub">Perfil preliminar • {category?.[1]} • {answers.cliente||'Cliente'} {answers.data?'• '+answers.data:''}</p>
-      <div className="dna-print-feature"><span>IDENTIDADE PREDOMINANTE</span><h2>{diagnosis.archetype}</h2><p>{diagnosis.summary}</p></div>
-      <h3>Leitura da festa</h3>
-      <div className="dna-print-grid">{diagnosis.signals.map(s=><div key={s.title}><small>{s.title}</small><strong>{s.value}</strong><p>{s.detail}</p></div>)}</div>
-      <h3>Referências musicais</h3>
-      <div className="dna-print-grid"><div><small>Identidade pessoal</small><p>{answers.artistas_pessoais}</p><p>{answers.faixas_pessoais}</p></div><div><small>Repertório da festa</small><p>{answers.genero_base}</p><p>{answers.artistas_festa}</p><p>{answers.faixas_festa}</p></div></div>
-      <h3>Direção artística</h3>
-      <p><strong>Versões e remixes:</strong> {answers.versoes_remixes}</p>
-      <p><strong>Não tocar:</strong> {answers.restricoes_festa}</p>
-      <h3>Prioridades da curadoria</h3><ul>{diagnosis.prioritize.map(v=><li key={v}>{v}</li>)}</ul>
-      <footer>Uma interpretação inicial das suas preferências, sujeita à validação conjunta no briefing. • Cimioni Mateus · DJ & Sax Live</footer>
+      <div className="report-meta"><span>{category?.[1]}</span><span>{answers.cliente||'Perfil musical'}</span>{answers.data&&<span>{answers.data}</span>}</div>
+      <div className="report-hero"><small>SEU PERFIL MUSICAL</small><h2>{diagnosis.archetype}</h2><p>{diagnosis.summary}</p></div>
+      <h3>O que faz sua festa acontecer</h3>
+      <div className="report-facts">{diagnosis.signals.map(s=><div key={s.title}><small>{s.title}</small><strong>{s.value}</strong></div>)}</div>
+      <h3>Sua identidade em música</h3>
+      <div className="report-columns"><div><small>O QUE TE REPRESENTA</small><p>{answers.artistas_pessoais}</p><p>{answers.faixas_pessoais}</p></div><div><small>O QUE VOCÊ QUER NA FESTA</small><p>{answers.genero_base}</p><p>{answers.artistas_festa}</p><p>{answers.faixas_festa}</p></div></div>
+      <h3>Direção musical sugerida</h3>
+      <ul className="report-priorities">{diagnosis.prioritize.map(v=><li key={v}>{v}</li>)}</ul>
+      <div className="report-notes"><p><strong>Originais e remixes</strong> {answers.versoes_remixes||'A definir'}</p><p><strong>Restrições</strong> {answers.restricoes_festa||'Nenhuma informada'}</p></div>
+      <footer><span>Este é o ponto de partida. A curadoria final nasce da nossa conversa e da energia do seu evento.</span><b>CIMIONI MATEUS · DJ & SAX LIVE</b></footer>
     </section>
-    <div className="mt-8 grid gap-3 sm:grid-cols-3"><button type="button" className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={()=>window.print()}><Printer size={17}/> Salvar PDF</button><button className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold" style={{background:ACCENT}} onClick={exportJSON}><Download size={17}/> Baixar briefing</button><button className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={sendEmail}><Mail size={17}/> Enviar por e-mail</button></div>
+    <div className="mt-8 grid gap-3 sm:grid-cols-3"><button type="button" className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={exportClientPDF}><Printer size={17}/> Salvar PDF</button><button className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold" style={{background:ACCENT}} onClick={exportJSON}><Download size={17}/> Baixar briefing</button><button className="flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3" onClick={sendEmail}><Mail size={17}/> Enviar por e-mail</button></div>
     <button className="mt-6 flex items-center gap-2 text-sm text-zinc-400 hover:text-white" onClick={reset}><RotateCcw size={16}/> Começar novamente</button>
    </motion.section>}
    </AnimatePresence>
