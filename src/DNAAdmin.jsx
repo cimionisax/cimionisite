@@ -49,6 +49,55 @@ export default function DNAAdmin() {
    .some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(term))
  }),[records,search])
  function logout(){setSession(null);setRecords([]);setSelected(null);setVerified(false);setPassword('');setMessage('')}
+ function saveAdminPDF(record) {
+  // Build a standalone print document without putting customer data in HTML markup.
+  const w=window.open('','_blank','width=920,height=1000')
+  if(!w){setMessage('Permita pop-ups para gerar o PDF.');return}
+  const style=`
+   @page{size:A4;margin:15mm}
+   *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+   body{margin:0;background:#fff;color:#163138;font:12px/1.5 Arial,sans-serif}
+   header{background:#102D32;color:#fff;padding:22px;border-bottom:4px solid #EC6E1A}
+   header small{letter-spacing:2px;color:#FFB37A}
+   h1{margin:7px 0;font-size:25px}h2{font-size:15px;color:#123238;border-bottom:1px solid #dde4e2;padding-bottom:6px;margin-top:20px}
+   .body{padding:14px 20px} .meta{color:#55676b}
+   .feature{padding:14px;background:#edf4f2;border-left:3px solid #EC6E1A;margin-top:15px}
+   .feature strong{display:block;font-size:17px;margin:5px 0}
+   .entry{border-bottom:1px solid #e0e6e4;padding:8px 0;break-inside:avoid}
+   .entry b{display:block;color:#A34B16;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+   .entry p{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0}
+   li{margin-bottom:6px;break-inside:avoid}
+   footer{border-top:1px solid #d5dddd;padding-top:10px;margin-top:20px;color:#677679;font-size:10px}
+   @media print{header,.feature{break-inside:avoid}}
+  `
+  w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Briefing DNA Musical</title><style>'+style+'</style></head><body><header><small>CIMIONI MATEUS · ÁREA PRIVADA</small><h1>Briefing musical completo</h1></header><div class="body" id="body"></div></body></html>')
+  w.document.close()
+  const root=w.document.getElementById('body')
+  const add=(parent,tag,txt,cls)=>{const el=w.document.createElement(tag);if(cls)el.className=cls;el.textContent=String(txt??'');parent.appendChild(el);return el}
+  add(root,'h2',record.client_name||'Cliente')
+  add(root,'p',(record.event_type||'Evento')+' · '+formatEventDate(record)+' · Recebido em '+fmt(record.created_at),'meta')
+  const hero=add(root,'div','','feature')
+  add(hero,'small','IDENTIDADE MUSICAL')
+  add(hero,'strong',record.diagnosis?.archetype||'Perfil musical')
+  add(hero,'p',record.diagnosis?.summary||'')
+  add(root,'h2','Respostas do questionário')
+  Object.entries(record.answers||{}).forEach(([key,value])=>{const row=add(root,'div','','entry');add(row,'b',key.replaceAll('_',' '));add(row,'p',value)})
+  add(root,'h2','Direção da curadoria')
+  const ul=add(root,'ul','')
+  ;(record.diagnosis?.prioritize||[]).forEach(item=>add(ul,'li',item))
+  add(root,'h2','Pontos de atenção')
+  const warnings=add(root,'ul','')
+  ;(record.diagnosis?.cautions||[]).forEach(item=>add(warnings,'li',item))
+  add(root,'footer','Documento administrativo · DNA Musical · Cimioni Mateus')
+  w.focus()
+  w.print()
+ }
+ function downloadJSON(record) {
+  const blob=new Blob([JSON.stringify(record,null,2)],{type:'application/json'})
+  const u=URL.createObjectURL(blob)
+  const a=document.createElement('a')
+  a.href=u;a.download='briefing-'+record.id+'.json';a.click();URL.revokeObjectURL(u)
+ }
  const panel='rounded-2xl border border-white/15 bg-[#112D31] p-5'
  return <main className="min-h-screen bg-[#061C20] px-5 py-8 text-white">
   <div className="mx-auto max-w-6xl">
@@ -91,7 +140,7 @@ export default function DNAAdmin() {
        <div className="rounded-xl bg-orange-500/10 p-4"><p className="text-xs text-orange-300">IDENTIDADE PREDOMINANTE</p><h3 className="mt-2 text-xl font-semibold">{selected.diagnosis?.archetype}</h3><p className="mt-2 text-sm">{selected.diagnosis?.summary}</p></div>
        <div><h3 className="mb-2 font-semibold">Referências e respostas</h3><dl className="space-y-3">{Object.entries(selected.answers||{}).map(([key,value])=><div key={key} className="border-b border-white/10 pb-2"><dt className="text-xs text-orange-300">{key.replaceAll('_',' ')}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm">{String(value??'')}</dd></div>)}</dl></div>
        <div><h3 className="mb-2 font-semibold">Prioridades da curadoria</h3><ul className="list-disc space-y-1 pl-5 text-sm">{(selected.diagnosis?.prioritize||[]).map((x,i)=><li key={i}>{x}</li>)}</ul></div>
-       <button onClick={()=>{const blob=new Blob([JSON.stringify(selected,null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='briefing-'+selected.id+'.json';a.click();URL.revokeObjectURL(u)}} className="rounded-lg border border-white/25 px-4 py-2 text-sm">Baixar briefing completo</button>
+       <div className="flex flex-wrap gap-3"><button onClick={()=>saveAdminPDF(selected)} className="rounded-lg bg-[#EC6E1A] px-4 py-2 text-sm font-semibold">Salvar briefing em PDF</button><button onClick={()=>downloadJSON(selected)} className="rounded-lg border border-white/25 px-4 py-2 text-sm">Exportar dados (JSON)</button></div>
       </div>}
      </section>
     </div>
