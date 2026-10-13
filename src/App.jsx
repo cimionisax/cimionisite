@@ -47,10 +47,10 @@ export default function App() {
           100svh preserva uma altura estável mesmo quando a barra do navegador muda. */}
       <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[100svh] md:inset-0 md:h-auto">
         <img
-          src="/images/bg-cimioni.jpg"
+          src="/images/C-167.jpg"
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="absolute inset-0 h-full w-full object-cover object-[65%_center] md:object-[center_32%]"
         />
         {/* overlay para legibilidade */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
