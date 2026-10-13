@@ -20,11 +20,11 @@ const SITE = {
   youtube: 'https://www.youtube.com/@CimioniMateus',
 }
 
-// vídeos com os títulos pedidos (mantendo URLs completas)
-const instaVideos = [
-  { title: 'Receptivo ao vivo',                url: 'https://www.instagram.com/reel/DA1xdzxvcC-/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==' },
-  { title: 'Feel So Close e a vibe da pista!', url: 'https://www.instagram.com/reel/Cz1yN6GPMhC/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==' },
-  { title: 'This Girl ao vivo em casamento!',  url: 'https://www.instagram.com/reel/C9n4-vWv00j/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==' },
+// Vídeos em destaque: YouTube e Instagram
+const featuredVideos = [
+  { title: 'Long Set | Live', platform: 'youtube', videoId: 'eiKnX_g2f5U' },
+  { title: 'Feel So Close e a vibe da pista!', platform: 'instagram', url: 'https://www.instagram.com/reel/Cz1yN6GPMhC/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==' },
+  { title: 'This Girl ao vivo em casamento!', platform: 'instagram', url: 'https://www.instagram.com/reel/C9n4-vWv00j/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==' },
 ]
 
 // helper: extrai o shortcode do Reel a partir da URL
@@ -218,7 +218,7 @@ export default function App() {
         </motion.div>
       </section>
 
-      {/* Músicas — agora com EMBED do Instagram */}
+      {/* Músicas — YouTube e Instagram */}
       <section id='musicas' className='max-w-6xl mx-auto px-4 py-16'>
         <div className='flex items-center gap-2 mb-6'>
           <Music2 className='w-5 h-5' />
@@ -226,12 +226,12 @@ export default function App() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {instaVideos.map((v) => (
+          {featuredVideos.map((v) => (
             <article key={v.title} className="rounded-2xl overflow-hidden ring-1 ring-white/10 bg-black/40">
               <div className="aspect-video">
                 <iframe
                   title={v.title}
-                  src={`https://www.instagram.com/reel/${igCode(v.url)}/embed`}
+                  src={v.platform === 'youtube' ? `https://www.youtube-nocookie.com/embed/${v.videoId}?start=2881` : `https://www.instagram.com/reel/${igCode(v.url)}/embed`}
                   className="w-full h-full"
                   style={{ border: 0 }}
                   loading="lazy"
@@ -240,7 +240,7 @@ export default function App() {
                 />
               </div>
               <div className="p-4 text-sm text-zinc-300 flex items-center gap-2">
-                <Instagram className="w-4 h-4" /> {v.title}
+                {v.platform === 'youtube' ? <Youtube className="w-4 h-4" /> : <Instagram className="w-4 h-4" />} {v.title}
               </div>
             </article>
           ))}
