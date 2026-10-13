@@ -15,7 +15,7 @@ const SITE = {
   tagline: 'DJ & Sax Live',
   city: 'Brasil',
   whatsapp: '5551998926490',
-  email: 'cimioi_saxmusic@outlook.com',
+  email: 'cimioni_saxmusic@outlook.com',
   instagram: 'https://www.instagram.com/_cimionimateus',
   youtube: 'https://www.youtube.com/@CimioniMateus',
 }
