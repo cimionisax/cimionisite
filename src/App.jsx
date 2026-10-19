@@ -61,7 +61,7 @@ export default function App() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* logo pequena à esquerda (opcional) */}
           <a href="#home" className="shrink-0">
-            <img src="/images/AF%20LOGO%202-20.png" alt="Logo" className="h-10" />
+            <img src="/images/AF%20LOGO%202-28%20%281%29.png" alt="Cimioni Mateus" className="h-12 w-auto object-contain md:h-14" />
           </a>
 
           {/* Acesso público ao questionário e atendimento */}
@@ -96,9 +96,9 @@ export default function App() {
         <header className="relative z-10 pt-6">
           <div className="max-w-6xl mx-auto px-4 flex justify-center">
             <img
-              src="/images/AF%20LOGO%202-20.png"
+              src="/images/AF%20LOGO%202-28%20%281%29.png"
               alt="Cimioni Mateus — Saxmusic"
-              className="h-20 md:h-28 lg:h-32 drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
+              className="h-28 w-auto max-w-[85vw] object-contain md:h-36 lg:h-40 drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
             />
           </div>
         </header>
