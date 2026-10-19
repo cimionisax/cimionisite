@@ -94,11 +94,11 @@ export default function App() {
 
         {/* LOGO central (um pouco menor) */}
         <header className="relative z-10 pt-6">
-          <div className="max-w-6xl mx-auto px-4 flex justify-center">
+          <div className="relative mx-auto h-28 max-w-6xl px-4 md:h-36 lg:h-40">
             <img
               src="/images/AF%20LOGO%202-28%20%281%29.png"
               alt="Cimioni Mateus — Saxmusic"
-              className="h-44 w-auto max-w-[92vw] object-contain md:h-56 lg:h-64 drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
+              className="absolute bottom-0 left-1/2 h-44 w-auto max-w-[92vw] -translate-x-1/2 object-contain md:h-56 lg:h-64 drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
             />
           </div>
         </header>
