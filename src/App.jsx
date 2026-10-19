@@ -154,13 +154,10 @@ export default function App() {
           <div key={group.heading} className="mb-12">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-white/15 pb-4">
               <div><p className="text-xs uppercase tracking-widest" style={{color:BRAND.accent}}>{group.eyebrow}</p><h3 className="mt-1 text-2xl md:text-3xl font-bold">{group.heading}</h3></div>
-              <div className="w-full max-w-lg rounded-2xl border border-white/15 border-l-[3px] border-l-[#EC6E1A] bg-[#06191C]/80 px-5 py-4 shadow-lg shadow-black/20 backdrop-blur-md md:w-auto">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#EC6E1A]" />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-300">A experiência</span>
-                </div>
-                <p className="text-sm leading-relaxed text-zinc-100 md:text-[15px]">{group.description}</p>
-              </div>
+              <p className="flex max-w-lg items-start gap-2.5 text-sm text-zinc-300">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#EC6E1A]" aria-hidden="true" />
+                <span>{group.description}</span>
+              </p>
             </div>
             <div className="grid gap-5 md:grid-cols-2">
               {group.items.map((p,i)=>(
