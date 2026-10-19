@@ -89,7 +89,7 @@ export default function App() {
             }}
           />
           {/* overlay mais forte pra garantir leitura */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/65" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/55" />
         </div>
 
         {/* LOGO central (um pouco menor) */}
