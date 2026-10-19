@@ -83,7 +83,7 @@ export default function App() {
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: "url('/images/bg-cimioni.jpg')", // <- sua foto do topo
+              backgroundImage: "url('/images/C-209.jpg')", // <- sua foto do topo
               backgroundSize: 'cover',
               backgroundPosition: 'center 18%',
             }}
