@@ -98,7 +98,7 @@ export default function App() {
             <img
               src="/images/AF%20LOGO%202-28%20%281%29.png"
               alt="Cimioni Mateus — Saxmusic"
-              className="h-28 w-auto max-w-[85vw] object-contain md:h-36 lg:h-40 drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
+              className="h-44 w-auto max-w-[92vw] object-contain md:h-56 lg:h-64 drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
             />
           </div>
         </header>
