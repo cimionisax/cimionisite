@@ -61,7 +61,7 @@ export default function App() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* logo pequena à esquerda (opcional) */}
           <a href="#home" className="shrink-0">
-            <img src="/images/AF%20LOGO%202-28%20%281%29.png" alt="Cimioni Mateus" className="h-12 w-auto object-contain md:h-14" />
+            <img src="/images/AF%20LOGO%202-28%20%281%29.png" alt="Cimioni Mateus" className="h-16 w-auto object-contain md:h-20" />
           </a>
 
           {/* Acesso público ao questionário e atendimento */}
